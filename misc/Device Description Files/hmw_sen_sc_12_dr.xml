@@ -1,0 +1,169 @@
+<homegearDevice version="7">
+	<supportedDevices>
+		<device id="HMW-Sen-SC-12-DR">
+			<description>RS485 shutter contact 12-channel (DIN rails)</description>
+			<typeNumber>0x1900</typeNumber>
+		</device>
+		<device id="HMW-Sen-SC-12-FM">
+			<description>RS485 shutter contact 12-channel (flush-mount)</description>
+			<typeNumber>0x1A00</typeNumber>
+		</device>
+	</supportedDevices>
+	<properties/>
+	<functions>
+		<function channel="0" type="MAINTENANCE" channelCount="1">
+			<properties>
+				<internal>true</internal>
+			</properties>
+			<configParameters>HMW-Sen-SC-12-DR_dev_master-0</configParameters>
+			<variables>maint_ch_values-0</variables>
+		</function>
+		<function channel="1" type="SENSOR" channelCount="12">
+			<properties>
+				<physicalChannelIndexOffset>-1</physicalChannelIndexOffset>
+			</properties>
+			<configParameters>hmw_sensor_ch_master-1</configParameters>
+			<variables>hmw_sensor_ch_values-1</variables>
+		</function>
+	</functions>
+	<packets>
+		<packet id="INFO_LEVEL">
+			<direction>toCentral</direction>
+			<type>0x69</type>
+			<channelIndex>10</channelIndex>
+			<binaryPayload>
+				<element>
+					<index>11.0</index>
+					<parameterId>STATE</parameterId>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="LEVEL_GET">
+			<direction>fromCentral</direction>
+			<type>0x53</type>
+			<channelIndex>10</channelIndex>
+		</packet>
+	</packets>
+	<parameterGroups>
+		<configParameters id="HMW-Sen-SC-12-DR_dev_master-0">
+			<parameter id="CENTRAL_ADDRESS">
+				<properties>
+					<visible>false</visible>
+				</properties>
+				<logicalInteger>
+					<setToValueOnPairing>1</setToValueOnPairing>
+				</logicalInteger>
+				<physicalInteger groupId="CENTRAL_ADDRESS">
+					<index>2.0</index>
+					<size>4.0</size>
+					<operationType>memory</operationType>
+					<memoryIndex>2.0</memoryIndex>
+				</physicalInteger>
+			</parameter>
+			<parameter id="DIRECT_LINK_DEACTIVATE">
+				<properties>
+					<visible>false</visible>
+				</properties>
+				<logicalBoolean>
+					<defaultValue>false</defaultValue>
+					<setToValueOnPairing>true</setToValueOnPairing>
+				</logicalBoolean>
+				<physicalInteger groupId="DIRECT_LINK_DEACTIVATE">
+					<index>6.0</index>
+					<size>0.1</size>
+					<operationType>memory</operationType>
+					<memoryIndex>6.0</memoryIndex>
+				</physicalInteger>
+			</parameter>
+		</configParameters>
+		<configParameters id="hmw_sensor_ch_master-1" memoryAddressStart="7" memoryAddressStep="2">
+			<parameter id="INPUT_LOCKED">
+				<properties>
+					<casts>
+						<booleanInteger>
+							<invert>true</invert>
+						</booleanInteger>
+					</casts>
+				</properties>
+				<logicalBoolean>
+					<defaultValue>false</defaultValue>
+				</logicalBoolean>
+				<physicalInteger groupId="INPUT_LOCKED">
+					<index>0.1</index>
+					<size>0.1</size>
+					<operationType>memory</operationType>
+					<memoryIndex>0.1</memoryIndex>
+					<memoryIndexOperation>addition</memoryIndexOperation>
+				</physicalInteger>
+			</parameter>
+		</configParameters>
+		<variables id="hmw_sensor_ch_values-1">
+			<parameter id="SENSOR">
+				<properties>
+					<writeable>false</writeable>
+					<control>DOOR_SENSOR.STATE</control>
+				</properties>
+				<logicalBoolean/>
+				<physicalInteger groupId="STATE">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="LEVEL_GET">
+						<type>get</type>
+						<responseId>INFO_LEVEL</responseId>
+					</packet>
+					<packet id="INFO_LEVEL">
+						<type>event</type>
+					</packet>
+				</packets>
+			</parameter>
+			<parameter id="INSTALL_TEST">
+				<properties>
+					<writeable>false</writeable>
+					<internal>true</internal>
+				</properties>
+				<logicalAction/>
+				<physicalInteger groupId="TEST_COUNTER">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="INFO_LEVEL">
+						<type>event</type>
+					</packet>
+				</packets>
+			</parameter>
+		</variables>
+		<variables id="maint_ch_values-0">
+			<parameter id="UNREACH">
+				<properties>
+					<writeable>false</writeable>
+					<service>true</service>
+				</properties>
+				<logicalBoolean/>
+				<physicalInteger groupId="UNREACH">
+					<operationType>internal</operationType>
+				</physicalInteger>
+			</parameter>
+			<parameter id="STICKY_UNREACH">
+				<properties>
+					<service>true</service>
+				</properties>
+				<logicalBoolean/>
+				<physicalInteger groupId="STICKY_UNREACH">
+					<operationType>internal</operationType>
+				</physicalInteger>
+			</parameter>
+			<parameter id="CONFIG_PENDING">
+				<properties>
+					<writeable>false</writeable>
+					<service>true</service>
+				</properties>
+				<logicalBoolean/>
+				<physicalInteger groupId="CONFIG_PENDING">
+					<operationType>internal</operationType>
+				</physicalInteger>
+			</parameter>
+		</variables>
+	</parameterGroups>
+</homegearDevice>
+

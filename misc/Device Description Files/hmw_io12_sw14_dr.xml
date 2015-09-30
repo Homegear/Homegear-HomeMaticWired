@@ -1,0 +1,432 @@
+<homegearDevice version="12">
+	<supportedDevices>
+		<device id="HMW-IO-12-Sw14-DR">
+			<description>RS485 I/O module 12-channel in and switch actuator 14-channel (DIN rails)</description>
+			<typeNumber>0x1C00</typeNumber>
+		</device>
+	</supportedDevices>
+	<properties/>
+	<functions>
+		<function channel="0" type="MAINTENANCE" channelCount="1">
+			<properties>
+				<internal>true</internal>
+			</properties>
+			<configParameters>HMW-IO-12-Sw14-DR_dev_master-0</configParameters>
+			<variables>maint_ch_values-0</variables>
+		</function>
+		<function channel="1" type="DIGITAL_OUTPUT" channelCount="6">
+			<properties>
+				<physicalChannelIndexOffset>-1</physicalChannelIndexOffset>
+			</properties>
+			<configParameters>hmw_io_ch_master-1</configParameters>
+			<variables>hmw_digital_output_values-1</variables>
+		</function>
+		<function channel="7" type="DIGITAL_ANALOG_OUTPUT" channelCount="8">
+			<properties>
+				<physicalChannelIndexOffset>-1</physicalChannelIndexOffset>
+			</properties>
+			<configParameters>hmw_io_ch_master-7-t7</configParameters>
+			<variables>hmw_analog_output_values-7</variables>
+			<alternativeFunction channel="7" type="DIGITAL_ANALOG_OUTPUT" channelCount="8">
+				<properties/>
+				<configParameters>hmw_io_ch_master-7-t7</configParameters>
+				<variables>hmw_digital_output_values-7</variables>
+			</alternativeFunction>
+		</function>
+		<function channel="15" type="DIGITAL_INPUT" channelCount="6">
+			<properties>
+				<physicalChannelIndexOffset>-1</physicalChannelIndexOffset>
+			</properties>
+			<configParameters>hmw_io_ch_master-15-t15</configParameters>
+			<variables>hmw_analog_input_values-15</variables>
+			<alternativeFunction channel="15" type="DIGITAL_INPUT" channelCount="6">
+				<properties/>
+				<configParameters>hmw_io_ch_master-15-t15</configParameters>
+				<variables>hmw_digital_input_values-15</variables>
+			</alternativeFunction>
+		</function>
+		<function channel="21" type="DIGITAL_ANALOG_INPUT" channelCount="6">
+			<properties>
+				<physicalChannelIndexOffset>-1</physicalChannelIndexOffset>
+			</properties>
+			<configParameters>hmw_io_ch_master-21-t21</configParameters>
+			<variables>hmw_analog_input_values-21</variables>
+			<alternativeFunction channel="21" type="DIGITAL_ANALOG_INPUT" channelCount="6">
+				<properties/>
+				<configParameters>hmw_io_ch_master-21-t21</configParameters>
+				<variables>hmw_digital_input_values-21</variables>
+			</alternativeFunction>
+		</function>
+	</functions>
+	<packets>
+		<packet id="INFO_FREQUENCY">
+			<direction>toCentral</direction>
+			<type>0x69</type>
+			<channelIndex>10</channelIndex>
+			<binaryPayload>
+				<element>
+					<index>11.0</index>
+					<size>3.0</size>
+					<parameterId>STATE</parameterId>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="INFO_LEVEL">
+			<direction>toCentral</direction>
+			<type>0x69</type>
+			<channelIndex>10</channelIndex>
+			<binaryPayload>
+				<element>
+					<index>11.0</index>
+					<size>2.0</size>
+					<parameterId>STATE</parameterId>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="LEVEL_GET">
+			<direction>fromCentral</direction>
+			<type>0x53</type>
+			<channelIndex>10</channelIndex>
+		</packet>
+		<packet id="LEVEL_SET">
+			<direction>fromCentral</direction>
+			<type>0x73</type>
+			<channelIndex>10</channelIndex>
+			<binaryPayload>
+				<element>
+					<index>11.0</index>
+					<size>2.0</size>
+					<parameterId>STATE</parameterId>
+				</element>
+			</binaryPayload>
+		</packet>
+	</packets>
+	<parameterGroups>
+		<configParameters id="HMW-IO-12-Sw14-DR_dev_master-0">
+			<parameter id="CENTRAL_ADDRESS">
+				<properties>
+					<visible>false</visible>
+				</properties>
+				<logicalInteger>
+					<setToValueOnPairing>1</setToValueOnPairing>
+				</logicalInteger>
+				<physicalInteger groupId="CENTRAL_ADDRESS">
+					<index>2.0</index>
+					<size>4.0</size>
+					<operationType>memory</operationType>
+					<memoryIndex>2.0</memoryIndex>
+				</physicalInteger>
+			</parameter>
+		</configParameters>
+		<configParameters id="hmw_io_ch_master-1"/>
+		<configParameters id="hmw_io_ch_master-15-t15">
+			<parameter id="BEHAVIOUR">
+				<properties>
+					<parameterGroupSelector>true</parameterGroupSelector>
+				</properties>
+				<logicalEnumeration>
+					<defaultValue>1</defaultValue>
+					<value>
+						<id>FREQUENCY_INPUT</id>
+						<index>0</index>
+					</value>
+					<value>
+						<id>DIGITAL_INPUT</id>
+						<index>1</index>
+					</value>
+				</logicalEnumeration>
+				<physicalInteger groupId="BEHAVIOUR">
+					<index>9.0</index>
+					<size>0.1</size>
+					<operationType>memory</operationType>
+					<memoryIndex>9.0</memoryIndex>
+					<memoryChannelStep>0.1</memoryChannelStep>
+				</physicalInteger>
+			</parameter>
+		</configParameters>
+		<configParameters id="hmw_io_ch_master-21-t21">
+			<parameter id="BEHAVIOUR">
+				<properties>
+					<parameterGroupSelector>true</parameterGroupSelector>
+				</properties>
+				<logicalEnumeration>
+					<defaultValue>1</defaultValue>
+					<value>
+						<id>ANALOG_INPUT</id>
+						<index>0</index>
+					</value>
+					<value>
+						<id>DIGITAL_INPUT</id>
+						<index>1</index>
+					</value>
+				</logicalEnumeration>
+				<physicalInteger groupId="BEHAVIOUR">
+					<index>8.0</index>
+					<size>0.1</size>
+					<operationType>memory</operationType>
+					<memoryIndex>8.0</memoryIndex>
+					<memoryChannelStep>0.1</memoryChannelStep>
+				</physicalInteger>
+			</parameter>
+		</configParameters>
+		<configParameters id="hmw_io_ch_master-7-t7">
+			<parameter id="BEHAVIOUR">
+				<properties>
+					<parameterGroupSelector>true</parameterGroupSelector>
+				</properties>
+				<logicalEnumeration>
+					<defaultValue>1</defaultValue>
+					<value>
+						<id>ANALOG_OUTPUT</id>
+						<index>0</index>
+					</value>
+					<value>
+						<id>DIGITAL_OUTPUT</id>
+						<index>1</index>
+					</value>
+				</logicalEnumeration>
+				<physicalInteger groupId="BEHAVIOUR">
+					<index>7.0</index>
+					<size>0.1</size>
+					<operationType>memory</operationType>
+					<memoryIndex>7.0</memoryIndex>
+					<memoryChannelStep>0.1</memoryChannelStep>
+				</physicalInteger>
+			</parameter>
+		</configParameters>
+		<variables id="hmw_analog_input_values-15">
+			<parameter id="FREQUENCY">
+				<properties>
+					<writeable>false</writeable>
+					<unit>mHz</unit>
+					<casts>
+						<decimalIntegerScale>
+							<factor>1.000000</factor>
+						</decimalIntegerScale>
+					</casts>
+				</properties>
+				<logicalDecimal>
+					<minimumValue>0.000000</minimumValue>
+					<maximumValue>350000.000000</maximumValue>
+				</logicalDecimal>
+				<physicalInteger groupId="STATE">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="LEVEL_GET">
+						<type>get</type>
+						<responseId>INFO_FREQUENCY</responseId>
+					</packet>
+					<packet id="INFO_FREQUENCY">
+						<type>event</type>
+					</packet>
+				</packets>
+			</parameter>
+		</variables>
+		<variables id="hmw_analog_input_values-21">
+			<parameter id="VALUE">
+				<properties>
+					<writeable>false</writeable>
+					<casts>
+						<decimalIntegerScale>
+							<factor>1.000000</factor>
+						</decimalIntegerScale>
+					</casts>
+				</properties>
+				<logicalDecimal>
+					<minimumValue>0.000000</minimumValue>
+					<maximumValue>1000.000000</maximumValue>
+				</logicalDecimal>
+				<physicalInteger groupId="STATE">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="LEVEL_GET">
+						<type>get</type>
+						<responseId>INFO_LEVEL</responseId>
+					</packet>
+					<packet id="INFO_LEVEL">
+						<type>event</type>
+					</packet>
+				</packets>
+			</parameter>
+		</variables>
+		<variables id="hmw_analog_output_values-7">
+			<parameter id="FREQUENCY">
+				<properties>
+					<control>DIGITAL_ANALOG_OUTPUT.FREQUENCY</control>
+					<unit>mHz</unit>
+					<casts>
+						<decimalIntegerScale/>
+					</casts>
+				</properties>
+				<logicalDecimal>
+					<minimumValue>0.000000</minimumValue>
+					<maximumValue>50000.000000</maximumValue>
+				</logicalDecimal>
+				<physicalInteger groupId="STATE">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="LEVEL_GET">
+						<type>get</type>
+						<responseId>INFO_LEVEL</responseId>
+					</packet>
+					<packet id="LEVEL_SET">
+						<type>set</type>
+					</packet>
+					<packet id="INFO_LEVEL">
+						<type>event</type>
+					</packet>
+				</packets>
+			</parameter>
+		</variables>
+		<variables id="hmw_digital_input_values-15">
+			<parameter id="STATE">
+				<properties>
+					<writeable>false</writeable>
+					<casts>
+						<booleanInteger>
+							<trueValue>1023</trueValue>
+						</booleanInteger>
+					</casts>
+				</properties>
+				<logicalBoolean>
+					<defaultValue>false</defaultValue>
+				</logicalBoolean>
+				<physicalInteger groupId="STATE">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="LEVEL_GET">
+						<type>get</type>
+						<responseId>INFO_LEVEL</responseId>
+					</packet>
+					<packet id="INFO_LEVEL">
+						<type>event</type>
+					</packet>
+				</packets>
+			</parameter>
+		</variables>
+		<variables id="hmw_digital_input_values-21">
+			<parameter id="STATE">
+				<properties>
+					<writeable>false</writeable>
+					<casts>
+						<booleanInteger>
+							<trueValue>1023</trueValue>
+						</booleanInteger>
+					</casts>
+				</properties>
+				<logicalBoolean>
+					<defaultValue>false</defaultValue>
+				</logicalBoolean>
+				<physicalInteger groupId="STATE">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="LEVEL_GET">
+						<type>get</type>
+						<responseId>INFO_LEVEL</responseId>
+					</packet>
+					<packet id="INFO_LEVEL">
+						<type>event</type>
+					</packet>
+				</packets>
+			</parameter>
+		</variables>
+		<variables id="hmw_digital_output_values-1">
+			<parameter id="STATE">
+				<properties>
+					<control>SWITCH.STATE</control>
+					<casts>
+						<booleanInteger>
+							<trueValue>1023</trueValue>
+						</booleanInteger>
+					</casts>
+				</properties>
+				<logicalBoolean>
+					<defaultValue>false</defaultValue>
+				</logicalBoolean>
+				<physicalInteger groupId="STATE">
+					<size>2.0</size>
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="LEVEL_GET">
+						<type>get</type>
+						<responseId>INFO_LEVEL</responseId>
+					</packet>
+					<packet id="LEVEL_SET">
+						<type>set</type>
+					</packet>
+					<packet id="INFO_LEVEL">
+						<type>event</type>
+					</packet>
+				</packets>
+			</parameter>
+		</variables>
+		<variables id="hmw_digital_output_values-7">
+			<parameter id="STATE">
+				<properties>
+					<control>SWITCH.STATE</control>
+					<casts>
+						<booleanInteger>
+							<trueValue>1023</trueValue>
+						</booleanInteger>
+					</casts>
+				</properties>
+				<logicalBoolean>
+					<defaultValue>false</defaultValue>
+				</logicalBoolean>
+				<physicalInteger groupId="STATE">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="LEVEL_GET">
+						<type>get</type>
+						<responseId>INFO_LEVEL</responseId>
+					</packet>
+					<packet id="LEVEL_SET">
+						<type>set</type>
+					</packet>
+					<packet id="INFO_LEVEL">
+						<type>event</type>
+					</packet>
+				</packets>
+			</parameter>
+		</variables>
+		<variables id="maint_ch_values-0">
+			<parameter id="UNREACH">
+				<properties>
+					<writeable>false</writeable>
+					<service>true</service>
+				</properties>
+				<logicalBoolean/>
+				<physicalInteger groupId="UNREACH">
+					<operationType>internal</operationType>
+				</physicalInteger>
+			</parameter>
+			<parameter id="STICKY_UNREACH">
+				<properties>
+					<service>true</service>
+				</properties>
+				<logicalBoolean/>
+				<physicalInteger groupId="STICKY_UNREACH">
+					<operationType>internal</operationType>
+				</physicalInteger>
+			</parameter>
+			<parameter id="CONFIG_PENDING">
+				<properties>
+					<writeable>false</writeable>
+					<service>true</service>
+				</properties>
+				<logicalBoolean/>
+				<physicalInteger groupId="CONFIG_PENDING">
+					<operationType>internal</operationType>
+				</physicalInteger>
+			</parameter>
+		</variables>
+	</parameterGroups>
+</homegearDevice>
+
