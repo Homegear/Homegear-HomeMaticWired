@@ -320,7 +320,8 @@ HMWiredPeer.lo: HMWiredPeer.cpp /usr/include/stdc-predef.h HMWiredPeer.h \
  /usr/include/homegear-base/Output/Output.h \
  /usr/include/homegear-base/SSDP/SSDP.h \
  /usr/include/homegear-base/Encoding/HTTP.h \
- /usr/include/homegear-base/Variable.h HMWiredPacket.h \
+ /usr/include/homegear-base/Variable.h \
+ /usr/include/homegear-base/IQueue.h HMWiredPacket.h \
  Devices/HMWiredCentral.h Devices/../HMWiredDevice.h \
  Devices/../HMWiredPeer.h Devices/../HMWiredPacketManager.h \
  Devices/../HMWiredPacket.h Devices/../HMWiredDeviceTypes.h \
@@ -1111,6 +1112,8 @@ HMWiredPeer.h:
 /usr/include/homegear-base/Encoding/HTTP.h:
 
 /usr/include/homegear-base/Variable.h:
+
+/usr/include/homegear-base/IQueue.h:
 
 HMWiredPacket.h:
 

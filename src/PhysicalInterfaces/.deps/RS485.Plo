@@ -323,6 +323,7 @@ PhysicalInterfaces/RS485.lo: PhysicalInterfaces/RS485.cpp \
  /usr/include/homegear-base/SSDP/SSDP.h \
  /usr/include/homegear-base/Encoding/HTTP.h \
  /usr/include/homegear-base/Variable.h \
+ /usr/include/homegear-base/IQueue.h \
  PhysicalInterfaces/../HMWiredPacket.h \
  /usr/include/homegear-base/BaseLib.h PhysicalInterfaces/../GD.h \
  PhysicalInterfaces/../HMWired.h \
@@ -1113,6 +1114,8 @@ PhysicalInterfaces/IHMWiredInterface.h:
 /usr/include/homegear-base/Encoding/HTTP.h:
 
 /usr/include/homegear-base/Variable.h:
+
+/usr/include/homegear-base/IQueue.h:
 
 PhysicalInterfaces/../HMWiredPacket.h:
 

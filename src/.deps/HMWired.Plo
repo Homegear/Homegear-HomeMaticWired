@@ -320,7 +320,8 @@ HMWired.lo: HMWired.cpp /usr/include/stdc-predef.h HMWired.h \
  /usr/include/homegear-base/Output/Output.h \
  /usr/include/homegear-base/SSDP/SSDP.h \
  /usr/include/homegear-base/Encoding/HTTP.h \
- /usr/include/homegear-base/Variable.h PhysicalInterfaces/RS485.h \
+ /usr/include/homegear-base/Variable.h \
+ /usr/include/homegear-base/IQueue.h PhysicalInterfaces/RS485.h \
  PhysicalInterfaces/IHMWiredInterface.h \
  /usr/include/homegear-base/BaseLib.h PhysicalInterfaces/HMW-LGW.h \
  PhysicalInterfaces/../HMWiredPacket.h HMWiredDeviceTypes.h \
@@ -1113,6 +1114,8 @@ HMWired.h:
 /usr/include/homegear-base/Encoding/HTTP.h:
 
 /usr/include/homegear-base/Variable.h:
+
+/usr/include/homegear-base/IQueue.h:
 
 PhysicalInterfaces/RS485.h:
 

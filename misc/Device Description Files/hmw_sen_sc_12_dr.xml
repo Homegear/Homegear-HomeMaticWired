@@ -53,7 +53,7 @@
 				<logicalInteger>
 					<setToValueOnPairing>1</setToValueOnPairing>
 				</logicalInteger>
-				<physicalInteger groupId="CENTRAL_ADDRESS">
+				<physicalInteger groupId="">
 					<index>2.0</index>
 					<size>4.0</size>
 					<operationType>memory</operationType>
@@ -68,7 +68,7 @@
 					<defaultValue>false</defaultValue>
 					<setToValueOnPairing>true</setToValueOnPairing>
 				</logicalBoolean>
-				<physicalInteger groupId="DIRECT_LINK_DEACTIVATE">
+				<physicalInteger groupId="">
 					<index>6.0</index>
 					<size>0.1</size>
 					<operationType>memory</operationType>
@@ -88,7 +88,7 @@
 				<logicalBoolean>
 					<defaultValue>false</defaultValue>
 				</logicalBoolean>
-				<physicalInteger groupId="INPUT_LOCKED">
+				<physicalInteger groupId="">
 					<index>0.1</index>
 					<size>0.1</size>
 					<operationType>memory</operationType>

@@ -176,7 +176,7 @@
 					<maximumValue>25.500000</maximumValue>
 					<defaultValue>2.000000</defaultValue>
 				</logicalDecimal>
-				<physicalInteger groupId="LOGGING_TIME">
+				<physicalInteger groupId="">
 					<index>1.0</index>
 					<size>1.0</size>
 					<operationType>memory</operationType>
@@ -190,7 +190,7 @@
 				<logicalInteger>
 					<setToValueOnPairing>1</setToValueOnPairing>
 				</logicalInteger>
-				<physicalInteger groupId="CENTRAL_ADDRESS">
+				<physicalInteger groupId="">
 					<index>2.0</index>
 					<size>4.0</size>
 					<operationType>memory</operationType>
@@ -205,7 +205,7 @@
 					<defaultValue>false</defaultValue>
 					<setToValueOnPairing>true</setToValueOnPairing>
 				</logicalBoolean>
-				<physicalInteger groupId="DIRECT_LINK_DEACTIVATE">
+				<physicalInteger groupId="">
 					<index>6.0</index>
 					<size>0.1</size>
 					<operationType>memory</operationType>
@@ -215,7 +215,7 @@
 		</configParameters>
 		<configParameters id="hmw_io_ch_master-1-t1" memoryAddressStart="33" memoryAddressStep="2">
 			<parameter id="LOGGING">
-				<properties>2</properties>
+				<properties/>
 				<logicalEnumeration>
 					<defaultValue>1</defaultValue>
 					<value>
@@ -227,7 +227,7 @@
 						<index>1</index>
 					</value>
 				</logicalEnumeration>
-				<physicalInteger groupId="LOGGING">
+				<physicalInteger groupId="">
 					<size>0.1</size>
 					<operationType>memory</operationType>
 					<memoryIndexOperation>addition</memoryIndexOperation>
@@ -438,7 +438,7 @@
 		<linkParameters id="hmw_input_ch_link-1" memoryAddressStart="841" memoryAddressStep="6" peerChannelMemoryOffset="5" channelMemoryOffset="0" peerAddressMemoryOffset="1" maxLinkCount="30"/>
 		<linkParameters id="hmw_switch_ch_link-1" memoryAddressStart="57" memoryAddressStep="28" peerChannelMemoryOffset="4" channelMemoryOffset="5" peerAddressMemoryOffset="0" maxLinkCount="28">
 			<parameter id="UI_HINT">
-				<properties>28</properties>
+				<properties/>
 				<logicalString>
 					<defaultValue/>
 				</logicalString>
@@ -447,7 +447,7 @@
 				</physicalString>
 			</parameter>
 			<parameter id="SHORT_ON_TIME_MODE">
-				<properties>store</properties>
+				<properties/>
 				<logicalEnumeration>
 					<defaultValue>1</defaultValue>
 					<value>
@@ -459,7 +459,7 @@
 						<index>1</index>
 					</value>
 				</logicalEnumeration>
-				<physicalInteger groupId="SHORT_ON_TIME_MODE">
+				<physicalInteger groupId="">
 					<index>6.7</index>
 					<size>0.1</size>
 					<operationType>memory</operationType>
@@ -468,7 +468,7 @@
 				</physicalInteger>
 			</parameter>
 			<parameter id="SHORT_OFF_TIME_MODE">
-				<properties>addition</properties>
+				<properties/>
 				<logicalEnumeration>
 					<defaultValue>1</defaultValue>
 					<value>
@@ -480,7 +480,7 @@
 						<index>1</index>
 					</value>
 				</logicalEnumeration>
-				<physicalInteger groupId="SHORT_OFF_TIME_MODE">
+				<physicalInteger groupId="">
 					<index>6.6</index>
 					<size>0.1</size>
 					<operationType>memory</operationType>
@@ -522,7 +522,7 @@
 						<index>2</index>
 					</value>
 				</logicalEnumeration>
-				<physicalInteger groupId="SHORT_TOGGLE_USE">
+				<physicalInteger groupId="">
 					<index>6.4</index>
 					<size>0.2</size>
 					<operationType>memory</operationType>
@@ -531,7 +531,7 @@
 				</physicalInteger>
 			</parameter>
 			<parameter id="SHORT_ACTION_TYPE">
-				<properties>addition</properties>
+				<properties/>
 				<logicalEnumeration>
 					<defaultValue>1</defaultValue>
 					<value>
@@ -543,7 +543,7 @@
 						<index>1</index>
 					</value>
 				</logicalEnumeration>
-				<physicalInteger groupId="SHORT_ACTION_TYPE">
+				<physicalInteger groupId="">
 					<index>6.0</index>
 					<size>0.1</size>
 					<operationType>memory</operationType>
@@ -584,7 +584,7 @@
 					<maximumValue>982980.000000</maximumValue>
 					<defaultValue>0.000000</defaultValue>
 				</logicalDecimal>
-				<physicalInteger groupId="SHORT_ONDELAY_TIME">
+				<physicalInteger groupId="">
 					<index>7.0</index>
 					<size>2.0</size>
 					<operationType>memory</operationType>
@@ -629,7 +629,7 @@
 						<specialValue id="NOT_USED">16383000.000000</specialValue>
 					</specialValues>
 				</logicalDecimal>
-				<physicalInteger groupId="SHORT_ON_TIME">
+				<physicalInteger groupId="">
 					<index>9.0</index>
 					<size>2.0</size>
 					<operationType>memory</operationType>
@@ -671,7 +671,7 @@
 					<maximumValue>982980.000000</maximumValue>
 					<defaultValue>0.000000</defaultValue>
 				</logicalDecimal>
-				<physicalInteger groupId="SHORT_OFFDELAY_TIME">
+				<physicalInteger groupId="">
 					<index>11.0</index>
 					<size>2.0</size>
 					<operationType>memory</operationType>
@@ -716,7 +716,7 @@
 						<specialValue id="NOT_USED">16383000.000000</specialValue>
 					</specialValues>
 				</logicalDecimal>
-				<physicalInteger groupId="SHORT_OFF_TIME">
+				<physicalInteger groupId="">
 					<index>13.0</index>
 					<size>2.0</size>
 					<operationType>memory</operationType>
@@ -726,7 +726,7 @@
 				</physicalInteger>
 			</parameter>
 			<parameter id="SHORT_JT_ONDELAY">
-				<properties>addition</properties>
+				<properties/>
 				<logicalEnumeration>
 					<defaultValue>1</defaultValue>
 					<value>
@@ -750,7 +750,7 @@
 						<index>4</index>
 					</value>
 				</logicalEnumeration>
-				<physicalInteger groupId="SHORT_JT_ONDELAY">
+				<physicalInteger groupId="">
 					<index>15.0</index>
 					<size>0.3</size>
 					<operationType>memory</operationType>
@@ -760,7 +760,7 @@
 				</physicalInteger>
 			</parameter>
 			<parameter id="SHORT_JT_ON">
-				<properties>addition</properties>
+				<properties/>
 				<logicalEnumeration>
 					<defaultValue>2</defaultValue>
 					<value>
@@ -784,7 +784,7 @@
 						<index>4</index>
 					</value>
 				</logicalEnumeration>
-				<physicalInteger groupId="SHORT_JT_ON">
+				<physicalInteger groupId="">
 					<index>15.3</index>
 					<size>0.3</size>
 					<operationType>memory</operationType>
@@ -794,7 +794,7 @@
 				</physicalInteger>
 			</parameter>
 			<parameter id="SHORT_JT_OFFDELAY">
-				<properties>addition</properties>
+				<properties/>
 				<logicalEnumeration>
 					<defaultValue>3</defaultValue>
 					<value>
@@ -818,7 +818,7 @@
 						<index>4</index>
 					</value>
 				</logicalEnumeration>
-				<physicalInteger groupId="SHORT_JT_OFFDELAY">
+				<physicalInteger groupId="">
 					<index>15.6</index>
 					<size>0.3</size>
 					<operationType>memory</operationType>
@@ -828,7 +828,7 @@
 				</physicalInteger>
 			</parameter>
 			<parameter id="SHORT_JT_OFF">
-				<properties>addition</properties>
+				<properties/>
 				<logicalEnumeration>
 					<defaultValue>0</defaultValue>
 					<value>
@@ -852,7 +852,7 @@
 						<index>4</index>
 					</value>
 				</logicalEnumeration>
-				<physicalInteger groupId="SHORT_JT_OFF">
+				<physicalInteger groupId="">
 					<index>16.1</index>
 					<size>0.3</size>
 					<operationType>memory</operationType>
@@ -862,7 +862,7 @@
 				</physicalInteger>
 			</parameter>
 			<parameter id="LONG_ON_TIME_MODE">
-				<properties>addition</properties>
+				<properties/>
 				<logicalEnumeration>
 					<defaultValue>1</defaultValue>
 					<value>
@@ -874,7 +874,7 @@
 						<index>1</index>
 					</value>
 				</logicalEnumeration>
-				<physicalInteger groupId="LONG_ON_TIME_MODE">
+				<physicalInteger groupId="">
 					<index>17.7</index>
 					<size>0.1</size>
 					<operationType>memory</operationType>
@@ -883,7 +883,7 @@
 				</physicalInteger>
 			</parameter>
 			<parameter id="LONG_OFF_TIME_MODE">
-				<properties>addition</properties>
+				<properties/>
 				<logicalEnumeration>
 					<defaultValue>1</defaultValue>
 					<value>
@@ -895,7 +895,7 @@
 						<index>1</index>
 					</value>
 				</logicalEnumeration>
-				<physicalInteger groupId="LONG_OFF_TIME_MODE">
+				<physicalInteger groupId="">
 					<index>17.6</index>
 					<size>0.1</size>
 					<operationType>memory</operationType>
@@ -937,7 +937,7 @@
 						<index>2</index>
 					</value>
 				</logicalEnumeration>
-				<physicalInteger groupId="LONG_TOGGLE_USE">
+				<physicalInteger groupId="">
 					<index>17.4</index>
 					<size>0.2</size>
 					<operationType>memory</operationType>
@@ -946,11 +946,11 @@
 				</physicalInteger>
 			</parameter>
 			<parameter id="LONG_MULTIEXECUTE">
-				<properties>addition</properties>
+				<properties/>
 				<logicalBoolean>
 					<defaultValue>true</defaultValue>
 				</logicalBoolean>
-				<physicalInteger groupId="LONG_MULTIEXECUTE">
+				<physicalInteger groupId="">
 					<index>17.2</index>
 					<size>0.1</size>
 					<operationType>memory</operationType>
@@ -959,7 +959,7 @@
 				</physicalInteger>
 			</parameter>
 			<parameter id="LONG_ACTION_TYPE">
-				<properties>addition</properties>
+				<properties/>
 				<logicalEnumeration>
 					<defaultValue>1</defaultValue>
 					<value>
@@ -971,7 +971,7 @@
 						<index>1</index>
 					</value>
 				</logicalEnumeration>
-				<physicalInteger groupId="LONG_ACTION_TYPE">
+				<physicalInteger groupId="">
 					<index>17.0</index>
 					<size>0.1</size>
 					<operationType>memory</operationType>
@@ -1012,7 +1012,7 @@
 					<maximumValue>982980.000000</maximumValue>
 					<defaultValue>0.000000</defaultValue>
 				</logicalDecimal>
-				<physicalInteger groupId="LONG_ONDELAY_TIME">
+				<physicalInteger groupId="">
 					<index>18.0</index>
 					<size>2.0</size>
 					<operationType>memory</operationType>
@@ -1057,7 +1057,7 @@
 						<specialValue id="NOT_USED">16383000.000000</specialValue>
 					</specialValues>
 				</logicalDecimal>
-				<physicalInteger groupId="LONG_ON_TIME">
+				<physicalInteger groupId="">
 					<index>20.0</index>
 					<size>2.0</size>
 					<operationType>memory</operationType>
@@ -1099,7 +1099,7 @@
 					<maximumValue>982980.000000</maximumValue>
 					<defaultValue>0.000000</defaultValue>
 				</logicalDecimal>
-				<physicalInteger groupId="LONG_OFFDELAY_TIME">
+				<physicalInteger groupId="">
 					<index>22.0</index>
 					<size>2.0</size>
 					<operationType>memory</operationType>
@@ -1144,7 +1144,7 @@
 						<specialValue id="NOT_USED">16383000.000000</specialValue>
 					</specialValues>
 				</logicalDecimal>
-				<physicalInteger groupId="LONG_OFF_TIME">
+				<physicalInteger groupId="">
 					<index>24.0</index>
 					<size>2.0</size>
 					<operationType>memory</operationType>
@@ -1154,7 +1154,7 @@
 				</physicalInteger>
 			</parameter>
 			<parameter id="LONG_JT_ONDELAY">
-				<properties>addition</properties>
+				<properties/>
 				<logicalEnumeration>
 					<defaultValue>1</defaultValue>
 					<value>
@@ -1178,7 +1178,7 @@
 						<index>4</index>
 					</value>
 				</logicalEnumeration>
-				<physicalInteger groupId="LONG_JT_ONDELAY">
+				<physicalInteger groupId="">
 					<index>26.0</index>
 					<size>0.3</size>
 					<operationType>memory</operationType>
@@ -1188,7 +1188,7 @@
 				</physicalInteger>
 			</parameter>
 			<parameter id="LONG_JT_ON">
-				<properties>addition</properties>
+				<properties/>
 				<logicalEnumeration>
 					<defaultValue>2</defaultValue>
 					<value>
@@ -1212,7 +1212,7 @@
 						<index>4</index>
 					</value>
 				</logicalEnumeration>
-				<physicalInteger groupId="LONG_JT_ON">
+				<physicalInteger groupId="">
 					<index>26.3</index>
 					<size>0.3</size>
 					<operationType>memory</operationType>
@@ -1222,7 +1222,7 @@
 				</physicalInteger>
 			</parameter>
 			<parameter id="LONG_JT_OFFDELAY">
-				<properties>addition</properties>
+				<properties/>
 				<logicalEnumeration>
 					<defaultValue>3</defaultValue>
 					<value>
@@ -1246,7 +1246,7 @@
 						<index>4</index>
 					</value>
 				</logicalEnumeration>
-				<physicalInteger groupId="LONG_JT_OFFDELAY">
+				<physicalInteger groupId="">
 					<index>26.6</index>
 					<size>0.3</size>
 					<operationType>memory</operationType>
@@ -1256,7 +1256,7 @@
 				</physicalInteger>
 			</parameter>
 			<parameter id="LONG_JT_OFF">
-				<properties>addition</properties>
+				<properties/>
 				<logicalEnumeration>
 					<defaultValue>0</defaultValue>
 					<value>
@@ -1280,7 +1280,7 @@
 						<index>4</index>
 					</value>
 				</logicalEnumeration>
-				<physicalInteger groupId="LONG_JT_OFF">
+				<physicalInteger groupId="">
 					<index>27.1</index>
 					<size>0.3</size>
 					<operationType>memory</operationType>

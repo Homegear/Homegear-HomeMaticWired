@@ -321,7 +321,8 @@ HMWiredPacketManager.lo: HMWiredPacketManager.cpp \
  /usr/include/homegear-base/Output/Output.h \
  /usr/include/homegear-base/SSDP/SSDP.h \
  /usr/include/homegear-base/Encoding/HTTP.h \
- /usr/include/homegear-base/Variable.h GD.h HMWired.h \
+ /usr/include/homegear-base/Variable.h \
+ /usr/include/homegear-base/IQueue.h GD.h HMWired.h \
  PhysicalInterfaces/IHMWiredInterface.h \
  /usr/include/homegear-base/BaseLib.h
 
@@ -1110,6 +1111,8 @@ HMWiredPacket.h:
 /usr/include/homegear-base/Encoding/HTTP.h:
 
 /usr/include/homegear-base/Variable.h:
+
+/usr/include/homegear-base/IQueue.h:
 
 GD.h:
 

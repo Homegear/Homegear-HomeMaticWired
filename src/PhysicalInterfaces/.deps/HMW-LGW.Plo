@@ -323,6 +323,7 @@ PhysicalInterfaces/HMW-LGW.lo: PhysicalInterfaces/HMW-LGW.cpp \
  /usr/include/homegear-base/SSDP/SSDP.h \
  /usr/include/homegear-base/Encoding/HTTP.h \
  /usr/include/homegear-base/Variable.h \
+ /usr/include/homegear-base/IQueue.h \
  PhysicalInterfaces/IHMWiredInterface.h \
  /usr/include/homegear-base/BaseLib.h PhysicalInterfaces/../GD.h \
  PhysicalInterfaces/../HMWired.h \
@@ -1113,6 +1114,8 @@ PhysicalInterfaces/../HMWiredPacket.h:
 /usr/include/homegear-base/Encoding/HTTP.h:
 
 /usr/include/homegear-base/Variable.h:
+
+/usr/include/homegear-base/IQueue.h:
 
 PhysicalInterfaces/IHMWiredInterface.h:
 

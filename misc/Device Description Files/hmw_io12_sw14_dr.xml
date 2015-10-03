@@ -110,7 +110,7 @@
 				<logicalInteger>
 					<setToValueOnPairing>1</setToValueOnPairing>
 				</logicalInteger>
-				<physicalInteger groupId="CENTRAL_ADDRESS">
+				<physicalInteger groupId="">
 					<index>2.0</index>
 					<size>4.0</size>
 					<operationType>memory</operationType>

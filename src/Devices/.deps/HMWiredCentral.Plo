@@ -321,7 +321,8 @@ Devices/HMWiredCentral.lo: Devices/HMWiredCentral.cpp \
  /usr/include/homegear-base/Output/Output.h \
  /usr/include/homegear-base/SSDP/SSDP.h \
  /usr/include/homegear-base/Encoding/HTTP.h \
- /usr/include/homegear-base/Variable.h Devices/../HMWiredPeer.h \
+ /usr/include/homegear-base/Variable.h \
+ /usr/include/homegear-base/IQueue.h Devices/../HMWiredPeer.h \
  Devices/../HMWiredPacket.h Devices/../HMWiredPacketManager.h \
  Devices/../HMWiredDeviceTypes.h /usr/include/c++/4.8/queue \
  /usr/include/c++/4.8/bits/stl_queue.h Devices/../GD.h \
@@ -1113,6 +1114,8 @@ Devices/../HMWiredDevice.h:
 /usr/include/homegear-base/Encoding/HTTP.h:
 
 /usr/include/homegear-base/Variable.h:
+
+/usr/include/homegear-base/IQueue.h:
 
 Devices/../HMWiredPeer.h:
 
