@@ -820,7 +820,7 @@ void HMWiredCentral::updateFirmware(uint64_t id)
 		if(!peer) return;
 		_updateMode = true;
 		_updateMutex.lock();
-		std::string filenamePrefix = BaseLib::HelperFunctions::getHexString((int32_t)BaseLib::Systems::DeviceFamilies::HomeMaticWired, 4) + "." + BaseLib::HelperFunctions::getHexString(peer->getDeviceType().type(), 8);
+		std::string filenamePrefix = BaseLib::HelperFunctions::getHexString(1, 4) + "." + BaseLib::HelperFunctions::getHexString(peer->getDeviceType().type(), 8);
 		std::string versionFile(_bl->settings.firmwarePath() + filenamePrefix + ".version");
 		if(!BaseLib::Io::fileExists(versionFile))
 		{
@@ -1140,7 +1140,7 @@ void HMWiredCentral::handleAnnounce(std::shared_ptr<HMWiredPacket> packet)
 		int32_t firmwareVersion = (packet->payload()->at(4) << 8) + packet->payload()->at(5);
 		std::string serialNumber((char*)&packet->payload()->at(6), 10);
 
-		std::shared_ptr<HMWiredPeer> peer = createPeer(packet->senderAddress(), firmwareVersion, BaseLib::Systems::LogicalDeviceType(BaseLib::Systems::DeviceFamilies::HomeMaticWired, deviceType), serialNumber, true);
+		std::shared_ptr<HMWiredPeer> peer = createPeer(packet->senderAddress(), firmwareVersion, BaseLib::Systems::LogicalDeviceType(1, deviceType), serialNumber, true);
 		if(!peer)
 		{
 			GD::out.printError("Error: HomeMatic Wired Central: Could not pair device with address 0x" + BaseLib::HelperFunctions::getHexString(packet->senderAddress(), 8) + " (type: 0x" + BaseLib::HelperFunctions::getHexString(deviceType, 4) + ", firmware version: 0x" + BaseLib::HelperFunctions::getHexString(firmwareVersion, 4) + "). No matching XML file was found.");
@@ -1714,7 +1714,7 @@ PVariable HMWiredCentral::searchDevices(int32_t clientID)
 				}
 				std::string serialNumber((char*)&response->payload()->at(0), response->payload()->size());
 
-				std::shared_ptr<HMWiredPeer> peer = createPeer(*i, firmwareVersion, BaseLib::Systems::LogicalDeviceType(BaseLib::Systems::DeviceFamilies::HomeMaticWired, deviceType), serialNumber, true);
+				std::shared_ptr<HMWiredPeer> peer = createPeer(*i, firmwareVersion, BaseLib::Systems::LogicalDeviceType(1, deviceType), serialNumber, true);
 				if(!peer)
 				{
 					GD::out.printError("Error: HomeMatic Wired Central: Could not pair device with address 0x" + BaseLib::HelperFunctions::getHexString(*i, 8) + " (type: 0x" + BaseLib::HelperFunctions::getHexString(deviceType, 4) + ", firmware version: 0x" + BaseLib::HelperFunctions::getHexString(firmwareVersion, 4) + "). No matching XML file was found.");

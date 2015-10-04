@@ -33,11 +33,11 @@
 namespace HMWired
 {
 
-HMWiredDevice::HMWiredDevice(IDeviceEventSink* eventHandler) : LogicalDevice(BaseLib::Systems::DeviceFamilies::HomeMaticWired, GD::bl, eventHandler)
+HMWiredDevice::HMWiredDevice(IDeviceEventSink* eventHandler) : LogicalDevice(1, GD::bl, eventHandler)
 {
 }
 
-HMWiredDevice::HMWiredDevice(uint32_t deviceID, std::string serialNumber, int32_t address, IDeviceEventSink* eventHandler) : LogicalDevice(BaseLib::Systems::DeviceFamilies::HomeMaticWired, GD::bl, deviceID, serialNumber, address, eventHandler)
+HMWiredDevice::HMWiredDevice(uint32_t deviceID, std::string serialNumber, int32_t address, IDeviceEventSink* eventHandler) : LogicalDevice(1, GD::bl, deviceID, serialNumber, address, eventHandler)
 {
 }
 
