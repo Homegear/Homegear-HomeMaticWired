@@ -12,8 +12,8 @@
 			<properties>
 				<internal>true</internal>
 			</properties>
-			<configParameters>HMW-IO-4-FM_dev_master-0</configParameters>
-			<variables>maint_ch_values-0</variables>
+			<configParameters>HMW-IO-4-FM_dev_master--0</configParameters>
+			<variables>maint_ch_values--0</variables>
 		</function>
 		<function channel="1" type="INPUT_OUTPUT" channelCount="4">
 			<properties>
@@ -22,18 +22,18 @@
 					<type>SWITCH</type>
 				</linkSenderFunctionTypes>
 			</properties>
-			<configParameters>hmw_io_ch_master-1-t1</configParameters>
-			<variables>hmw_input_ch_values-1</variables>
-			<linkParameters>hmw_input_ch_link-1</linkParameters>
+			<configParameters>hmw_io_ch_master--1-t1</configParameters>
+			<variables>hmw_input_ch_values--1</variables>
+			<linkParameters>hmw_input_ch_link--1</linkParameters>
 			<alternativeFunction channel="1" type="INPUT_OUTPUT" channelCount="4">
 				<properties>
 					<linkReceiverFunctionTypes>
 						<type>SWITCH</type>
 					</linkReceiverFunctionTypes>
 				</properties>
-				<configParameters>hmw_io_ch_master-1-t1</configParameters>
-				<variables>hmw_switch_ch_values-1</variables>
-				<linkParameters>hmw_switch_ch_link-1</linkParameters>
+				<configParameters>hmw_io_ch_master--1-t1</configParameters>
+				<variables>hmw_switch_ch_values--1</variables>
+				<linkParameters>hmw_switch_ch_link--1</linkParameters>
 			</alternativeFunction>
 		</function>
 	</functions>
@@ -162,7 +162,7 @@
 		</packet>
 	</packets>
 	<parameterGroups>
-		<configParameters id="HMW-IO-4-FM_dev_master-0">
+		<configParameters id="HMW-IO-4-FM_dev_master--0">
 			<parameter id="LOGGING_TIME">
 				<properties>
 					<unit>s</unit>
@@ -214,7 +214,7 @@
 				</physicalInteger>
 			</parameter>
 		</configParameters>
-		<configParameters id="hmw_io_ch_master-1-t1" memoryAddressStart="16" memoryAddressStep="2">
+		<configParameters id="hmw_io_ch_master--1-t1" memoryAddressStart="16" memoryAddressStep="2">
 			<parameter id="LOGGING">
 				<properties/>
 				<logicalEnumeration>
@@ -258,7 +258,7 @@
 				</physicalInteger>
 			</parameter>
 		</configParameters>
-		<variables id="hmw_input_ch_values-1">
+		<variables id="hmw_input_ch_values--1">
 			<parameter id="PRESS_SHORT">
 				<properties>
 					<control>BUTTON.SHORT</control>
@@ -312,7 +312,7 @@
 				</packets>
 			</parameter>
 		</variables>
-		<variables id="hmw_switch_ch_values-1">
+		<variables id="hmw_switch_ch_values--1">
 			<parameter id="STATE">
 				<properties>
 					<control>SWITCH.STATE</control>
@@ -405,7 +405,7 @@
 				</packets>
 			</parameter>
 		</variables>
-		<variables id="maint_ch_values-0">
+		<variables id="maint_ch_values--0">
 			<parameter id="UNREACH">
 				<properties>
 					<writeable>false</writeable>
@@ -436,8 +436,8 @@
 				</physicalInteger>
 			</parameter>
 		</variables>
-		<linkParameters id="hmw_input_ch_link-1" memoryAddressStart="864" memoryAddressStep="6" peerChannelMemoryOffset="5" channelMemoryOffset="0" peerAddressMemoryOffset="1" maxLinkCount="26"/>
-		<linkParameters id="hmw_switch_ch_link-1" memoryAddressStart="24" memoryAddressStep="28" peerChannelMemoryOffset="4" channelMemoryOffset="5" peerAddressMemoryOffset="0" maxLinkCount="30">
+		<linkParameters id="hmw_input_ch_link--1" memoryAddressStart="864" memoryAddressStep="6" peerChannelMemoryOffset="5" channelMemoryOffset="0" peerAddressMemoryOffset="1" maxLinkCount="26"/>
+		<linkParameters id="hmw_switch_ch_link--1" memoryAddressStart="24" memoryAddressStep="28" peerChannelMemoryOffset="4" channelMemoryOffset="5" peerAddressMemoryOffset="0" maxLinkCount="30">
 			<parameter id="UI_HINT">
 				<properties/>
 				<logicalString>

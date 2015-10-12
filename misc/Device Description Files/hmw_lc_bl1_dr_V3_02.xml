@@ -13,8 +13,8 @@
 			<properties>
 				<internal>true</internal>
 			</properties>
-			<configParameters>HMW-LC-Bl1-DR_dev_master-0</configParameters>
-			<variables>maint_ch_values-0</variables>
+			<configParameters>HMW-LC-Bl1-DR_dev_master--0</configParameters>
+			<variables>maint_ch_values--0</variables>
 		</function>
 		<function channel="1" type="KEY" channelCount="2">
 			<properties>
@@ -23,9 +23,9 @@
 					<type>SWITCH</type>
 				</linkSenderFunctionTypes>
 			</properties>
-			<configParameters>hmw_input_ch_master-1</configParameters>
-			<variables>hmw_input_ch_values-1</variables>
-			<linkParameters>hmw_input_ch_link-1</linkParameters>
+			<configParameters>hmw_input_ch_master--1</configParameters>
+			<variables>hmw_input_ch_values--1</variables>
+			<linkParameters>hmw_input_ch_link--1</linkParameters>
 		</function>
 		<function channel="3" type="BLIND" channelCount="1">
 			<properties>
@@ -34,9 +34,9 @@
 					<type>SWITCH</type>
 				</linkReceiverFunctionTypes>
 			</properties>
-			<configParameters>hmw_blind_ch_master-3</configParameters>
-			<variables>hmw_blind_ch_values-3</variables>
-			<linkParameters>hmw_blind_ch_link-3</linkParameters>
+			<configParameters>hmw_blind_ch_master--3</configParameters>
+			<variables>hmw_blind_ch_values--3</variables>
+			<linkParameters>hmw_blind_ch_link--3</linkParameters>
 		</function>
 	</functions>
 	<packets>
@@ -164,7 +164,7 @@
 		</packet>
 	</packets>
 	<parameterGroups>
-		<configParameters id="HMW-LC-Bl1-DR_dev_master-0">
+		<configParameters id="HMW-LC-Bl1-DR_dev_master--0">
 			<parameter id="LOGGING_TIME">
 				<properties>
 					<unit>s</unit>
@@ -216,7 +216,7 @@
 				</physicalInteger>
 			</parameter>
 		</configParameters>
-		<configParameters id="hmw_blind_ch_master-3" memoryAddressStart="11" memoryAddressStep="7">
+		<configParameters id="hmw_blind_ch_master--3" memoryAddressStart="11" memoryAddressStep="7">
 			<parameter id="LOGGING">
 				<properties/>
 				<logicalEnumeration>
@@ -320,7 +320,7 @@
 				</physicalInteger>
 			</parameter>
 		</configParameters>
-		<configParameters id="hmw_input_ch_master-1" memoryAddressStart="7" memoryAddressStep="2">
+		<configParameters id="hmw_input_ch_master--1" memoryAddressStart="7" memoryAddressStep="2">
 			<parameter id="INPUT_TYPE">
 				<properties/>
 				<logicalEnumeration>
@@ -389,7 +389,7 @@
 				</physicalInteger>
 			</parameter>
 		</configParameters>
-		<variables id="hmw_blind_ch_values-3">
+		<variables id="hmw_blind_ch_values--3">
 			<parameter id="LEVEL">
 				<properties>
 					<control>BLIND.LEVEL</control>
@@ -564,7 +564,7 @@
 				</packets>
 			</parameter>
 		</variables>
-		<variables id="hmw_input_ch_values-1">
+		<variables id="hmw_input_ch_values--1">
 			<parameter id="PRESS_SHORT">
 				<properties>
 					<control>BUTTON.SHORT</control>
@@ -600,7 +600,7 @@
 				</packets>
 			</parameter>
 		</variables>
-		<variables id="maint_ch_values-0">
+		<variables id="maint_ch_values--0">
 			<parameter id="UNREACH">
 				<properties>
 					<writeable>false</writeable>
@@ -631,7 +631,7 @@
 				</physicalInteger>
 			</parameter>
 		</variables>
-		<linkParameters id="hmw_blind_ch_link-3" memoryAddressStart="18" memoryAddressStep="38" peerChannelMemoryOffset="4" channelMemoryOffset="5" peerAddressMemoryOffset="0" maxLinkCount="22">
+		<linkParameters id="hmw_blind_ch_link--3" memoryAddressStart="18" memoryAddressStep="38" peerChannelMemoryOffset="4" channelMemoryOffset="5" peerAddressMemoryOffset="0" maxLinkCount="22">
 			<parameter id="UI_HINT">
 				<properties/>
 				<logicalString>
@@ -2169,7 +2169,7 @@
 				</physicalInteger>
 			</parameter>
 		</linkParameters>
-		<linkParameters id="hmw_input_ch_link-1" memoryAddressStart="854" memoryAddressStep="6" peerChannelMemoryOffset="5" channelMemoryOffset="0" peerAddressMemoryOffset="1" maxLinkCount="28"/>
+		<linkParameters id="hmw_input_ch_link--1" memoryAddressStart="854" memoryAddressStep="6" peerChannelMemoryOffset="5" channelMemoryOffset="0" peerAddressMemoryOffset="1" maxLinkCount="28"/>
 	</parameterGroups>
 </homegearDevice>
 

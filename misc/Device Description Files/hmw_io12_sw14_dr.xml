@@ -11,50 +11,50 @@
 			<properties>
 				<internal>true</internal>
 			</properties>
-			<configParameters>HMW-IO-12-Sw14-DR_dev_master-0</configParameters>
-			<variables>maint_ch_values-0</variables>
+			<configParameters>HMW-IO-12-Sw14-DR_dev_master--0</configParameters>
+			<variables>maint_ch_values--0</variables>
 		</function>
 		<function channel="1" type="DIGITAL_OUTPUT" channelCount="6">
 			<properties>
 				<physicalChannelIndexOffset>-1</physicalChannelIndexOffset>
 			</properties>
-			<configParameters>hmw_io_ch_master-1</configParameters>
-			<variables>hmw_digital_output_values-1</variables>
+			<configParameters>hmw_io_ch_master--1</configParameters>
+			<variables>hmw_digital_output_values--1</variables>
 		</function>
 		<function channel="7" type="DIGITAL_ANALOG_OUTPUT" channelCount="8">
 			<properties>
 				<physicalChannelIndexOffset>-1</physicalChannelIndexOffset>
 			</properties>
-			<configParameters>hmw_io_ch_master-7-t7</configParameters>
-			<variables>hmw_analog_output_values-7</variables>
+			<configParameters>hmw_io_ch_master--7-t7</configParameters>
+			<variables>hmw_analog_output_values--7</variables>
 			<alternativeFunction channel="7" type="DIGITAL_ANALOG_OUTPUT" channelCount="8">
 				<properties/>
-				<configParameters>hmw_io_ch_master-7-t7</configParameters>
-				<variables>hmw_digital_output_values-7</variables>
+				<configParameters>hmw_io_ch_master--7-t7</configParameters>
+				<variables>hmw_digital_output_values--7</variables>
 			</alternativeFunction>
 		</function>
 		<function channel="15" type="DIGITAL_INPUT" channelCount="6">
 			<properties>
 				<physicalChannelIndexOffset>-1</physicalChannelIndexOffset>
 			</properties>
-			<configParameters>hmw_io_ch_master-15-t15</configParameters>
-			<variables>hmw_analog_input_values-15</variables>
+			<configParameters>hmw_io_ch_master--15-t15</configParameters>
+			<variables>hmw_analog_input_values--15</variables>
 			<alternativeFunction channel="15" type="DIGITAL_INPUT" channelCount="6">
 				<properties/>
-				<configParameters>hmw_io_ch_master-15-t15</configParameters>
-				<variables>hmw_digital_input_values-15</variables>
+				<configParameters>hmw_io_ch_master--15-t15</configParameters>
+				<variables>hmw_digital_input_values--15</variables>
 			</alternativeFunction>
 		</function>
 		<function channel="21" type="DIGITAL_ANALOG_INPUT" channelCount="6">
 			<properties>
 				<physicalChannelIndexOffset>-1</physicalChannelIndexOffset>
 			</properties>
-			<configParameters>hmw_io_ch_master-21-t21</configParameters>
-			<variables>hmw_analog_input_values-21</variables>
+			<configParameters>hmw_io_ch_master--21-t21</configParameters>
+			<variables>hmw_analog_input_values--21</variables>
 			<alternativeFunction channel="21" type="DIGITAL_ANALOG_INPUT" channelCount="6">
 				<properties/>
-				<configParameters>hmw_io_ch_master-21-t21</configParameters>
-				<variables>hmw_digital_input_values-21</variables>
+				<configParameters>hmw_io_ch_master--21-t21</configParameters>
+				<variables>hmw_digital_input_values--21</variables>
 			</alternativeFunction>
 		</function>
 	</functions>
@@ -102,7 +102,7 @@
 		</packet>
 	</packets>
 	<parameterGroups>
-		<configParameters id="HMW-IO-12-Sw14-DR_dev_master-0">
+		<configParameters id="HMW-IO-12-Sw14-DR_dev_master--0">
 			<parameter id="CENTRAL_ADDRESS">
 				<properties>
 					<visible>false</visible>
@@ -118,8 +118,8 @@
 				</physicalInteger>
 			</parameter>
 		</configParameters>
-		<configParameters id="hmw_io_ch_master-1"/>
-		<configParameters id="hmw_io_ch_master-15-t15">
+		<configParameters id="hmw_io_ch_master--1"/>
+		<configParameters id="hmw_io_ch_master--15-t15">
 			<parameter id="BEHAVIOUR">
 				<properties>
 					<parameterGroupSelector>true</parameterGroupSelector>
@@ -144,7 +144,7 @@
 				</physicalInteger>
 			</parameter>
 		</configParameters>
-		<configParameters id="hmw_io_ch_master-21-t21">
+		<configParameters id="hmw_io_ch_master--21-t21">
 			<parameter id="BEHAVIOUR">
 				<properties>
 					<parameterGroupSelector>true</parameterGroupSelector>
@@ -169,7 +169,7 @@
 				</physicalInteger>
 			</parameter>
 		</configParameters>
-		<configParameters id="hmw_io_ch_master-7-t7">
+		<configParameters id="hmw_io_ch_master--7-t7">
 			<parameter id="BEHAVIOUR">
 				<properties>
 					<parameterGroupSelector>true</parameterGroupSelector>
@@ -194,7 +194,7 @@
 				</physicalInteger>
 			</parameter>
 		</configParameters>
-		<variables id="hmw_analog_input_values-15">
+		<variables id="hmw_analog_input_values--15">
 			<parameter id="FREQUENCY">
 				<properties>
 					<writeable>false</writeable>
@@ -223,7 +223,7 @@
 				</packets>
 			</parameter>
 		</variables>
-		<variables id="hmw_analog_input_values-21">
+		<variables id="hmw_analog_input_values--21">
 			<parameter id="VALUE">
 				<properties>
 					<writeable>false</writeable>
@@ -251,7 +251,7 @@
 				</packets>
 			</parameter>
 		</variables>
-		<variables id="hmw_analog_output_values-7">
+		<variables id="hmw_analog_output_values--7">
 			<parameter id="FREQUENCY">
 				<properties>
 					<control>DIGITAL_ANALOG_OUTPUT.FREQUENCY</control>
@@ -281,7 +281,7 @@
 				</packets>
 			</parameter>
 		</variables>
-		<variables id="hmw_digital_input_values-15">
+		<variables id="hmw_digital_input_values--15">
 			<parameter id="STATE">
 				<properties>
 					<writeable>false</writeable>
@@ -308,7 +308,7 @@
 				</packets>
 			</parameter>
 		</variables>
-		<variables id="hmw_digital_input_values-21">
+		<variables id="hmw_digital_input_values--21">
 			<parameter id="STATE">
 				<properties>
 					<writeable>false</writeable>
@@ -335,7 +335,7 @@
 				</packets>
 			</parameter>
 		</variables>
-		<variables id="hmw_digital_output_values-1">
+		<variables id="hmw_digital_output_values--1">
 			<parameter id="STATE">
 				<properties>
 					<control>SWITCH.STATE</control>
@@ -366,7 +366,7 @@
 				</packets>
 			</parameter>
 		</variables>
-		<variables id="hmw_digital_output_values-7">
+		<variables id="hmw_digital_output_values--7">
 			<parameter id="STATE">
 				<properties>
 					<control>SWITCH.STATE</control>
@@ -396,7 +396,7 @@
 				</packets>
 			</parameter>
 		</variables>
-		<variables id="maint_ch_values-0">
+		<variables id="maint_ch_values--0">
 			<parameter id="UNREACH">
 				<properties>
 					<writeable>false</writeable>
