@@ -323,8 +323,7 @@ Devices/HMWired-SD.lo: Devices/HMWired-SD.cpp /usr/include/stdc-predef.h \
  Devices/../HMWiredPacket.h Devices/../HMWiredPacketManager.h \
  Devices/../HMWiredDeviceTypes.h /usr/include/c++/4.8/queue \
  /usr/include/c++/4.8/bits/stl_queue.h Devices/../GD.h \
- Devices/../HMWired.h Devices/../PhysicalInterfaces/IHMWiredInterface.h \
- /usr/include/homegear-base/BaseLib.h
+ Devices/../HMWired.h Devices/../PhysicalInterfaces/IHMWiredInterface.h
 
 /usr/include/stdc-predef.h:
 
@@ -1125,5 +1124,3 @@ Devices/../GD.h:
 Devices/../HMWired.h:
 
 Devices/../PhysicalInterfaces/IHMWiredInterface.h:
-
-/usr/include/homegear-base/BaseLib.h:

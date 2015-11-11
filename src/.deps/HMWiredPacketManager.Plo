@@ -320,8 +320,7 @@ HMWiredPacketManager.lo: HMWiredPacketManager.cpp \
  /usr/include/homegear-base/Encoding/HTTP.h \
  /usr/include/homegear-base/Variable.h \
  /usr/include/homegear-base/IQueue.h GD.h HMWired.h \
- PhysicalInterfaces/IHMWiredInterface.h \
- /usr/include/homegear-base/BaseLib.h
+ PhysicalInterfaces/IHMWiredInterface.h
 
 /usr/include/stdc-predef.h:
 
@@ -1110,5 +1109,3 @@ GD.h:
 HMWired.h:
 
 PhysicalInterfaces/IHMWiredInterface.h:
-
-/usr/include/homegear-base/BaseLib.h:

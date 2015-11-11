@@ -28,10 +28,16 @@
  */
 
 #include "Factory.h"
+#include "../config.h"
 
 BaseLib::Systems::DeviceFamily* HMWiredFactory::createDeviceFamily(BaseLib::Obj* bl, BaseLib::Systems::DeviceFamily::IFamilyEventSink* eventHandler)
 {
 	return new HMWired::HMWired(bl, eventHandler);
+}
+
+std::string getVersion()
+{
+	return VERSION;
 }
 
 BaseLib::Systems::SystemFactory* getFactory()

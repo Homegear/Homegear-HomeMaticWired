@@ -321,7 +321,7 @@ PhysicalInterfaces/IHMWiredInterface.lo: \
  /usr/include/homegear-base/Encoding/HTTP.h \
  /usr/include/homegear-base/Variable.h \
  /usr/include/homegear-base/IQueue.h PhysicalInterfaces/../GD.h \
- /usr/include/homegear-base/BaseLib.h PhysicalInterfaces/../HMWired.h \
+ PhysicalInterfaces/../HMWired.h \
  PhysicalInterfaces/../PhysicalInterfaces/IHMWiredInterface.h
 
 /usr/include/stdc-predef.h:
@@ -1105,8 +1105,6 @@ PhysicalInterfaces/IHMWiredInterface.h:
 /usr/include/homegear-base/IQueue.h:
 
 PhysicalInterfaces/../GD.h:
-
-/usr/include/homegear-base/BaseLib.h:
 
 PhysicalInterfaces/../HMWired.h:
 
