@@ -46,7 +46,7 @@ HMWired::HMWired(BaseLib::Obj* bl, BaseLib::Systems::DeviceFamily::IFamilyEventS
 	GD::out.setPrefix("Module HomeMatic Wired: ");
 	GD::out.printDebug("Debug: Loading module...");
 	_family = 1;
-	GD::rpcDevices.init(_bl);
+	GD::rpcDevices.init(_bl, this);
 }
 
 HMWired::~HMWired()
