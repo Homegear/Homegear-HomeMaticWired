@@ -48,7 +48,7 @@ HMW_LGW::HMW_LGW(std::shared_ptr<BaseLib::Systems::PhysicalInterfaceSettings> se
 	}
 	if(settings->lanKey.empty())
 	{
-		_out.printError("Error: No security key specified in physicalinterfaces.conf.");
+		_out.printError("Error: No security key specified in homematicwired.conf.");
 		return;
 	}
 }
@@ -405,7 +405,7 @@ bool HMW_LGW::aesInit()
 
 	if(_settings->lanKey.empty())
 	{
-		_out.printError("Error: No AES key specified in physicalinterfaces.conf for communication with your HMW-LGW.");
+		_out.printError("Error: No AES key specified in homematicwired.conf for communication with your HMW-LGW.");
 		return false;
 	}
 
@@ -889,7 +889,7 @@ void HMW_LGW::processData(std::vector<uint8_t>& data)
 			if(packetString.size() < 5 || packetString.at(0) != 'S')
 			{
 				_stopped = true;
-				_out.printError("Error: First packet does not start with \"S\" or has wrong structure. Please check your AES key in physicalinterfaces.conf. Stopping listening.");
+				_out.printError("Error: First packet does not start with \"S\" or has wrong structure. Please check your AES key in homematicwired.conf. Stopping listening.");
 				return;
 			}
 			_initComplete = true;

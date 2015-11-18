@@ -27,32 +27,26 @@
  * files in the program, then also delete it here.
  */
 
-#ifndef GD_H_
-#define GD_H_
-
-#define HMWIRED_FAMILY_ID 1
+#ifndef INTERFACES_H_
+#define INTERFACES_H_
 
 #include "homegear-base/BaseLib.h"
-#include "HMWired.h"
-#include "PhysicalInterfaces/IHMWiredInterface.h"
 
 namespace HMWired
 {
 
-class GD
+using namespace BaseLib;
+
+class Interfaces : public BaseLib::Systems::PhysicalInterfaces
 {
 public:
-	virtual ~GD();
+	Interfaces(BaseLib::Obj* bl, std::vector<std::shared_ptr<Systems::PhysicalInterfaceSettings>> physicalInterfaceSettings);
+	virtual ~Interfaces();
 
-	static BaseLib::Obj* bl;
-	static HMWired* family;
-	static std::shared_ptr<IHMWiredInterface> physicalInterface;
-	static BaseLib::DeviceDescription::Devices rpcDevices;
-	static BaseLib::Output out;
-private:
-	GD();
+protected:
+	virtual void create();
 };
 
 }
 
-#endif /* GD_H_ */
+#endif

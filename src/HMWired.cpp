@@ -28,9 +28,8 @@
  */
 
 #include "HMWired.h"
-#include "PhysicalInterfaces/RS485.h"
-#include "PhysicalInterfaces/HMW-LGW.h"
 #include "HMWiredDeviceTypes.h"
+#include "Interfaces.h"
 #include "Devices/HMWiredCentral.h"
 #include "Devices/HMWired-SD.h"
 #include "GD.h"
@@ -38,15 +37,15 @@
 namespace HMWired
 {
 
-HMWired::HMWired(BaseLib::Obj* bl, BaseLib::Systems::DeviceFamily::IFamilyEventSink* eventHandler) : BaseLib::Systems::DeviceFamily(bl, eventHandler)
+HMWired::HMWired(BaseLib::Obj* bl, BaseLib::Systems::DeviceFamily::IFamilyEventSink* eventHandler) : BaseLib::Systems::DeviceFamily(bl, eventHandler, HMWIRED_FAMILY_ID, "HomeMatic Wired")
 {
 	GD::bl = bl;
 	GD::family = this;
 	GD::out.init(bl);
 	GD::out.setPrefix("Module HomeMatic Wired: ");
 	GD::out.printDebug("Debug: Loading module...");
-	_family = 1;
 	GD::rpcDevices.init(_bl, this);
+	_physicalInterfaces.reset(new Interfaces(bl, _settings->getPhysicalInterfaceSettings()));
 }
 
 HMWired::~HMWired()
@@ -73,34 +72,6 @@ void HMWired::dispose()
 }
 
 std::shared_ptr<BaseLib::Systems::Central> HMWired::getCentral() { return _central; }
-
-std::shared_ptr<BaseLib::Systems::IPhysicalInterface> HMWired::createPhysicalDevice(std::shared_ptr<BaseLib::Systems::PhysicalInterfaceSettings> settings)
-{
-	try
-	{
-		if(!settings) return std::shared_ptr<IHMWiredInterface>();
-		GD::out.printDebug("Debug: Creating physical device. Type defined in physicalinterfaces.conf is: " + settings->type);
-		GD::physicalInterface = std::shared_ptr<IHMWiredInterface>();
-		if(!settings) return GD::physicalInterface;
-		if(settings->type == "rs485") GD::physicalInterface.reset(new RS485(settings));
-		else if(settings->type == "hmwlgw") GD::physicalInterface.reset(new HMW_LGW(settings));
-		else GD::out.printError("Error: Unsupported physical device type for family HomeMatic Wired: " + settings->type);
-		return GD::physicalInterface;
-	}
-	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(...)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-	}
-	return std::shared_ptr<BaseLib::Systems::IPhysicalInterface>();
-}
 
 uint32_t HMWired::getUniqueAddress(uint32_t seed)
 {
@@ -204,7 +175,7 @@ void HMWired::load()
 	try
 	{
 		_devices.clear();
-		std::shared_ptr<BaseLib::Database::DataTable> rows = _bl->db->getDevices((uint32_t)_family);
+		std::shared_ptr<BaseLib::Database::DataTable> rows = _bl->db->getDevices((uint32_t)getFamily());
 		bool spyDeviceExists = false;
 		for(BaseLib::Database::DataTable::iterator row = rows->begin(); row != rows->end(); ++row)
 		{
