@@ -41,7 +41,6 @@ using namespace BaseLib::DeviceDescription;
 namespace HMWired
 {
 class HMWiredCentral;
-class HMWiredDevice;
 
 class FrameValue
 {
@@ -78,7 +77,7 @@ public:
 	bool ignorePackets = false;
 
 	void worker();
-	virtual std::string handleCLICommand(std::string command);
+	virtual std::string handleCliCommand(std::string command);
 	void initializeLinkConfig(int32_t channel, std::shared_ptr<BaseLib::Systems::BasicPeer> peer);
 	std::vector<int32_t> setConfigParameter(double index, double size, std::vector<uint8_t>& binaryValue);
 	std::vector<int32_t> setMasterConfigParameter(int32_t channelIndex, double index, double step, double size, std::vector<uint8_t>& binaryValue);
@@ -88,10 +87,10 @@ public:
 	std::vector<uint8_t> getMasterConfigParameter(int32_t channelIndex, double index, double step, double size);
 	std::vector<uint8_t> getMasterConfigParameter(int32_t channelIndex, int32_t addressStart, int32_t addressStep, double indexOffset, double size);
 	std::vector<uint8_t> getMasterConfigParameter(int32_t channel, PParameterGroup parameterSet, PParameter parameter);
-	virtual bool load(BaseLib::Systems::LogicalDevice* device);
+	virtual bool load(BaseLib::Systems::ICentral* central);
     void serializePeers(std::vector<uint8_t>& encodedData);
     void unserializePeers(std::shared_ptr<std::vector<char>> serializedData);
-    virtual void loadVariables(BaseLib::Systems::LogicalDevice* device = nullptr, std::shared_ptr<BaseLib::Database::DataTable> rows = std::shared_ptr<BaseLib::Database::DataTable>());
+    virtual void loadVariables(BaseLib::Systems::ICentral* central, std::shared_ptr<BaseLib::Database::DataTable>& rows);
     virtual void saveVariables();
 	virtual void savePeers();
 	bool hasPeers(int32_t channel) { if(_peers.find(channel) == _peers.end() || _peers[channel].empty()) return false; else return true; }
@@ -158,8 +157,7 @@ protected:
 	 */
 	std::thread _pingThread;
 
-	virtual std::shared_ptr<BaseLib::Systems::Central> getCentral();
-	virtual std::shared_ptr<BaseLib::Systems::LogicalDevice> getDevice(int32_t address);
+	virtual std::shared_ptr<BaseLib::Systems::ICentral> getCentral();
 
 	/**
 	 * {@inheritDoc}

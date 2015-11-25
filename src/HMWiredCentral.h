@@ -30,9 +30,9 @@
 #ifndef HMWIREDCENTRAL_H_
 #define HMWIREDCENTRAL_H_
 
-class HMWiredPacket;
-
-#include "../HMWiredDevice.h"
+#include "homegear-base/BaseLib.h"
+#include "HMWiredPeer.h"
+#include "HMWiredPacketManager.h"
 
 #include <memory>
 #include <mutex>
@@ -41,22 +41,44 @@ class HMWiredPacket;
 namespace HMWired
 {
 
-class HMWiredCentral : public HMWiredDevice, public BaseLib::Systems::Central
+class HMWiredCentral : public BaseLib::Systems::ICentral
 {
 public:
-	HMWiredCentral(IDeviceEventSink* eventHandler);
-	HMWiredCentral(uint32_t deviceType, std::string serialNumber, int32_t address, IDeviceEventSink* eventHandler);
+	HMWiredCentral(ICentralEventSink* eventHandler);
+	HMWiredCentral(uint32_t deviceType, std::string serialNumber, int32_t address, ICentralEventSink* eventHandler);
 	virtual ~HMWiredCentral();
+	virtual void dispose(bool wait = true);
+
+	std::shared_ptr<HMWiredPeer> getPeer(int32_t address);
+	std::shared_ptr<HMWiredPeer> getPeer(uint64_t id);
+	std::shared_ptr<HMWiredPeer> getPeer(std::string serialNumber);
+	virtual void loadPeers();
+	virtual void savePeers(bool full);
+	virtual void loadVariables();
+	virtual void saveVariables();
+	virtual void saveMessageCounters();
+	virtual void serializeMessageCounters(std::vector<uint8_t>& encodedData);
+	virtual void unserializeMessageCounters(std::shared_ptr<std::vector<char>> serializedData);
+	virtual uint8_t getMessageCounter(int32_t destinationAddress);
+
+	virtual bool isInPairingMode() { return _pairing; }
+	virtual std::shared_ptr<HMWiredPacket> sendPacket(std::shared_ptr<HMWiredPacket> packet, bool resend, bool systemResponse = false);
+	std::shared_ptr<HMWiredPacket> getSentPacket(int32_t address) { return _sentPackets.get(address); }
+
+	virtual std::shared_ptr<HMWiredPacket> getResponse(uint8_t command, int32_t destinationAddress, bool synchronizationBit = false);
+	virtual std::shared_ptr<HMWiredPacket> getResponse(std::vector<uint8_t>& payload, int32_t destinationAddress, bool synchronizationBit = false);
+	virtual std::shared_ptr<HMWiredPacket> getResponse(std::shared_ptr<HMWiredPacket> packet, bool systemResponse = false);
+	virtual std::vector<uint8_t> readEEPROM(int32_t deviceAddress, int32_t eepromAddress);
+	virtual bool writeEEPROM(int32_t deviceAddress, int32_t eepromAddress, std::vector<uint8_t>& data);
+	virtual void sendOK(int32_t messageCounter, int32_t destinationAddress);
+
 	virtual bool onPacketReceived(std::string& senderID, std::shared_ptr<BaseLib::Systems::Packet> packet);
-	std::string handleCLICommand(std::string command);
-	uint64_t getPeerIDFromSerial(std::string serialNumber) { std::shared_ptr<HMWiredPeer> peer = getPeer(serialNumber); if(peer) return peer->getID(); else return 0; }
+	std::string handleCliCommand(std::string command);
+	uint64_t getPeerIdFromSerial(std::string serialNumber) { std::shared_ptr<HMWiredPeer> peer = getPeer(serialNumber); if(peer) return peer->getID(); else return 0; }
 	void updateFirmwares(std::vector<uint64_t> ids);
 	void updateFirmware(uint64_t id);
 	void handleAnnounce(std::shared_ptr<HMWiredPacket> packet);
 	bool peerInit(std::shared_ptr<HMWiredPeer> peer);
-
-	virtual bool knowsDevice(std::string serialNumber);
-	virtual bool knowsDevice(uint64_t id);
 
 	virtual PVariable addLink(int32_t clientID, std::string senderSerialNumber, int32_t senderChannel, std::string receiverSerialNumber, int32_t receiverChannel, std::string name, std::string description);
 	virtual PVariable addLink(int32_t clientID, uint64_t senderID, int32_t senderChannel, uint64_t receiverID, int32_t receiverChannel, std::string name, std::string description);
@@ -70,6 +92,19 @@ public:
 	virtual PVariable searchDevices(int32_t clientID);
 	virtual PVariable updateFirmware(int32_t clientID, std::vector<uint64_t> ids, bool manual);
 protected:
+	//In table variables
+	int32_t _firmwareVersion = 0;
+	int32_t _centralAddress = 0;
+	std::unordered_map<int32_t, uint8_t> _messageCounter;
+	//End
+
+	bool _stopWorkerThread = false;
+	std::thread _workerThread;
+
+	HMWiredPacketManager _receivedPackets;
+	HMWiredPacketManager _sentPackets;
+	bool _pairing = false;
+
 	std::mutex _peerInitMutex;
 
 	//Updates:
@@ -86,6 +121,8 @@ protected:
 	virtual void worker();
 	void deletePeer(uint64_t id);
 	virtual void init();
+	void lockBus();
+	void unlockBus();
 };
 
 } /* namespace HMWired */

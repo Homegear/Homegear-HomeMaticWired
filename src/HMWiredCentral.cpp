@@ -28,16 +28,16 @@
  */
 
 #include "HMWiredCentral.h"
-#include "../GD.h"
+#include "GD.h"
 
 namespace HMWired {
 
-HMWiredCentral::HMWiredCentral(IDeviceEventSink* eventHandler) : HMWiredDevice(eventHandler), BaseLib::Systems::Central(GD::bl, this)
+HMWiredCentral::HMWiredCentral(ICentralEventSink* eventHandler) : BaseLib::Systems::ICentral(HMWIRED_FAMILY_ID, GD::bl, eventHandler)
 {
 	init();
 }
 
-HMWiredCentral::HMWiredCentral(uint32_t deviceID, std::string serialNumber, int32_t address, IDeviceEventSink* eventHandler) : HMWiredDevice(deviceID, serialNumber, address, eventHandler), Central(GD::bl, this)
+HMWiredCentral::HMWiredCentral(uint32_t deviceID, std::string serialNumber, int32_t address, ICentralEventSink* eventHandler) : BaseLib::Systems::ICentral(HMWIRED_FAMILY_ID, GD::bl, deviceID, serialNumber, address, eventHandler)
 {
 	init();
 }
@@ -54,13 +54,49 @@ HMWiredCentral::~HMWiredCentral()
 	_announceThreadMutex.unlock();
 }
 
+void HMWiredCentral::dispose(bool wait)
+{
+	try
+	{
+		if(_disposing) return;
+		_disposing = true;
+		GD::out.printDebug("Removing device " + std::to_string(_deviceId) + " from physical device's event queue...");
+		if(GD::physicalInterface) GD::physicalInterface->removeEventHandler(_physicalInterfaceEventhandler);
+		_stopWorkerThread = true;
+		if(_workerThread.joinable())
+		{
+			GD::out.printDebug("Debug: Waiting for worker thread of device " + std::to_string(_deviceId) + "...");
+			_workerThread.join();
+		}
+	}
+    catch(const std::exception& ex)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+	_disposed = true;
+}
+
 void HMWiredCentral::init()
 {
 	try
 	{
-		HMWiredDevice::init();
+		if(_initialized) return; //Prevent running init two times
+		_initialized = true;
 
-		_deviceType = (uint32_t)DeviceType::HMWIREDCENTRAL;
+		if(GD::physicalInterface) _physicalInterfaceEventhandler = GD::physicalInterface->addEventHandler((BaseLib::Systems::IPhysicalInterface::IPhysicalInterfaceEventSink*)this);
+
+		_messageCounter[0] = 0; //Broadcast message counter
+
+		_workerThread = std::thread(&HMWiredCentral::worker, this);
+		BaseLib::Threads::setThreadPriority(_bl, _workerThread.native_handle(), _bl->settings.workerThreadPriority(), _bl->settings.workerThreadPolicy());
 	}
 	catch(const std::exception& ex)
 	{
@@ -154,14 +190,195 @@ void HMWiredCentral::worker()
     }
 }
 
+void HMWiredCentral::loadPeers()
+{
+	try
+	{
+		std::shared_ptr<BaseLib::Database::DataTable> rows = _bl->db->getPeers(_deviceId);
+		for(BaseLib::Database::DataTable::iterator row = rows->begin(); row != rows->end(); ++row)
+		{
+			int32_t peerID = row->second.at(0)->intValue;
+			GD::out.printMessage("Loading HomeMatic Wired peer " + std::to_string(peerID));
+			int32_t address = row->second.at(2)->intValue;
+			std::shared_ptr<HMWiredPeer> peer(new HMWiredPeer(peerID, address, row->second.at(3)->textValue, _deviceId, true, this));
+			if(!peer->load(this)) continue;
+			if(!peer->getRpcDevice()) continue;
+			_peersMutex.lock();
+			_peers[peer->getAddress()] = peer;
+			if(!peer->getSerialNumber().empty()) _peersBySerial[peer->getSerialNumber()] = peer;
+			_peersById[peerID] = peer;
+			_peersMutex.unlock();
+		}
+	}
+	catch(const std::exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    	_peersMutex.unlock();
+    }
+    catch(BaseLib::Exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    	_peersMutex.unlock();
+    }
+    catch(...)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    	_peersMutex.unlock();
+    }
+}
+
+void HMWiredCentral::loadVariables()
+{
+	try
+	{
+		std::shared_ptr<BaseLib::Database::DataTable> rows = _bl->db->getDeviceVariables(_deviceId);
+		for(BaseLib::Database::DataTable::iterator row = rows->begin(); row != rows->end(); ++row)
+		{
+			_variableDatabaseIds[row->second.at(2)->intValue] = row->second.at(0)->intValue;
+			switch(row->second.at(2)->intValue)
+			{
+			case 0:
+				_firmwareVersion = row->second.at(3)->intValue;
+				break;
+			case 1:
+				_centralAddress = row->second.at(3)->intValue;
+				break;
+			case 2:
+				unserializeMessageCounters(row->second.at(5)->binaryValue);
+				break;
+			}
+		}
+	}
+	catch(const std::exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+}
+
+void HMWiredCentral::saveVariables()
+{
+	try
+	{
+		if(_deviceId == 0) return;
+		saveVariable(0, _firmwareVersion);
+		saveVariable(1, _centralAddress);
+		saveMessageCounters(); //2
+	}
+	catch(const std::exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+}
+
+std::shared_ptr<HMWiredPeer> HMWiredCentral::getPeer(int32_t address)
+{
+	try
+	{
+		_peersMutex.lock();
+		if(_peers.find(address) != _peers.end())
+		{
+			std::shared_ptr<HMWiredPeer> peer(std::dynamic_pointer_cast<HMWiredPeer>(_peers.at(address)));
+			_peersMutex.unlock();
+			return peer;
+		}
+	}
+	catch(const std::exception& ex)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+    _peersMutex.unlock();
+    return std::shared_ptr<HMWiredPeer>();
+}
+
+std::shared_ptr<HMWiredPeer> HMWiredCentral::getPeer(uint64_t id)
+{
+	try
+	{
+		_peersMutex.lock();
+		if(_peersById.find(id) != _peersById.end())
+		{
+			std::shared_ptr<HMWiredPeer> peer(std::dynamic_pointer_cast<HMWiredPeer>(_peersById.at(id)));
+			_peersMutex.unlock();
+			return peer;
+		}
+	}
+	catch(const std::exception& ex)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+    _peersMutex.unlock();
+    return std::shared_ptr<HMWiredPeer>();
+}
+
+std::shared_ptr<HMWiredPeer> HMWiredCentral::getPeer(std::string serialNumber)
+{
+	try
+	{
+		_peersMutex.lock();
+		if(_peersBySerial.find(serialNumber) != _peersBySerial.end())
+		{
+			std::shared_ptr<HMWiredPeer> peer(std::dynamic_pointer_cast<HMWiredPeer>(_peersBySerial.at(serialNumber)));
+			_peersMutex.unlock();
+			return peer;
+		}
+	}
+	catch(const std::exception& ex)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+    _peersMutex.unlock();
+    return std::shared_ptr<HMWiredPeer>();
+}
+
 bool HMWiredCentral::onPacketReceived(std::string& senderID, std::shared_ptr<BaseLib::Systems::Packet> packet)
 {
 	try
 	{
 		if(_disposing) return false;
-		HMWiredDevice::onPacketReceived(senderID, packet);
 		std::shared_ptr<HMWiredPacket> hmWiredPacket(std::dynamic_pointer_cast<HMWiredPacket>(packet));
 		if(!hmWiredPacket) return false;
+		if(GD::bl->debugLevel >= 4) std::cout << BaseLib::HelperFunctions::getTimeString(hmWiredPacket->timeReceived()) << " HomeMatic Wired packet received: " + hmWiredPacket->hexString() << std::endl;
+		_receivedPackets.set(hmWiredPacket->senderAddress(), hmWiredPacket, hmWiredPacket->timeReceived());
 		std::shared_ptr<HMWiredPeer> peer(getPeer(hmWiredPacket->senderAddress()));
 		if(peer) peer->packetReceived(hmWiredPacket);
 		else if(hmWiredPacket->messageType() == 0x41 && !_pairing)
@@ -213,7 +430,7 @@ void HMWiredCentral::deletePeer(uint64_t id)
 		_peersMutex.lock();
 		if(_peersBySerial.find(peer->getSerialNumber()) != _peersBySerial.end()) _peersBySerial.erase(peer->getSerialNumber());
 		if(_peers.find(peer->getAddress()) != _peers.end()) _peers.erase(peer->getAddress());
-		if(_peersByID.find(id) != _peersByID.end()) _peersByID.erase(id);
+		if(_peersById.find(id) != _peersById.end()) _peersById.erase(id);
 		_peersMutex.unlock();
 		GD::out.printMessage("Removed HomeMatic Wired peer " + std::to_string(peer->getID()));
 	}
@@ -234,7 +451,536 @@ void HMWiredCentral::deletePeer(uint64_t id)
     }
 }
 
-std::string HMWiredCentral::handleCLICommand(std::string command)
+std::shared_ptr<HMWiredPacket> HMWiredCentral::sendPacket(std::shared_ptr<HMWiredPacket> packet, bool resend, bool systemResponse)
+{
+	try
+	{
+		//First check if communication is in progress
+		int64_t time = BaseLib::HelperFunctions::getTime();
+		uint32_t busWaitingTime = GD::physicalInterface->getBusWaitingTime();
+		std::shared_ptr<HMWiredPacketInfo> rxPacketInfo;
+		std::shared_ptr<HMWiredPacketInfo> txPacketInfo = _sentPackets.getInfo(packet->destinationAddress());
+		int64_t timeDifference = 0;
+		if(txPacketInfo) timeDifference = time - txPacketInfo->time;
+		//ACKs should always be sent immediately
+		if(packet->type() != HMWiredPacketType::ackMessage && !GD::physicalInterface->autoResend() && (!txPacketInfo || timeDifference > 210))
+		{
+			rxPacketInfo = _receivedPackets.getInfo(packet->destinationAddress());
+			int64_t rxTimeDifference = 0;
+			if(rxPacketInfo) rxTimeDifference = time - rxPacketInfo->time;
+			if(!rxPacketInfo || rxTimeDifference > 50)
+			{
+				//Communication might be in progress. Wait a little
+				if(_bl->debugLevel > 4 && (time - GD::physicalInterface->lastPacketSent() < 210 || time - GD::physicalInterface->lastPacketReceived() < 210)) GD::out.printDebug("Debug: HomeMatic Wired Device 0x" + BaseLib::HelperFunctions::getHexString(_deviceId) + ": Waiting for RS485 bus to become free... (Packet: " + packet->hexString() + ")");
+				if(GD::physicalInterface->getFastSending())
+				{
+					while(time - GD::physicalInterface->lastPacketSent() < busWaitingTime || time - GD::physicalInterface->lastPacketReceived() < busWaitingTime)
+					{
+						std::this_thread::sleep_for(std::chrono::milliseconds(20));
+						time = BaseLib::HelperFunctions::getTime();
+						if(time - GD::physicalInterface->lastPacketSent() >= busWaitingTime && time - GD::physicalInterface->lastPacketReceived() >= busWaitingTime)
+						{
+							int32_t sleepingTime = BaseLib::HelperFunctions::getRandomNumber(0, busWaitingTime / 2);
+							if(_bl->debugLevel > 4) GD::out.printDebug("Debug: HomeMatic Wired Device 0x" + BaseLib::HelperFunctions::getHexString(_deviceId) + ": RS485 bus is free now. Waiting randomly for " + std::to_string(sleepingTime) + "ms... (Packet: " + packet->hexString() + ")");
+							//Sleep random time
+							std::this_thread::sleep_for(std::chrono::milliseconds(sleepingTime));
+							time = BaseLib::HelperFunctions::getTime();
+						}
+					}
+				}
+				else
+				{
+					while(time - GD::physicalInterface->lastPacketSent() < 210 || time - GD::physicalInterface->lastPacketReceived() < 210)
+					{
+						std::this_thread::sleep_for(std::chrono::milliseconds(50));
+						time = BaseLib::HelperFunctions::getTime();
+						if(time - GD::physicalInterface->lastPacketSent() >= 210 && time - GD::physicalInterface->lastPacketReceived() >= 210)
+						{
+							int32_t sleepingTime = BaseLib::HelperFunctions::getRandomNumber(0, 100);
+							if(_bl->debugLevel > 4) GD::out.printDebug("Debug: HomeMatic Wired Device 0x" + BaseLib::HelperFunctions::getHexString(_deviceId) + ": RS485 bus is free now. Waiting randomly for " + std::to_string(sleepingTime) + "ms... (Packet: " + packet->hexString() + ")");
+							//Sleep random time
+							std::this_thread::sleep_for(std::chrono::milliseconds(sleepingTime));
+							time = BaseLib::HelperFunctions::getTime();
+						}
+					}
+				}
+				if(_bl->debugLevel > 4) GD::out.printDebug("Debug: HomeMatic Wired Device 0x" + BaseLib::HelperFunctions::getHexString(_deviceId) + ": RS485 bus is still free... sending... (Packet: " + packet->hexString() + ")");
+			}
+		}
+		//RS485 bus should be free
+		uint32_t responseDelay = GD::physicalInterface->responseDelay();
+		_sentPackets.set(packet->destinationAddress(), packet);
+		if(txPacketInfo)
+		{
+			timeDifference = time - txPacketInfo->time;
+			if(timeDifference < responseDelay)
+			{
+				txPacketInfo->time += responseDelay - timeDifference; //Set to sending time
+				std::this_thread::sleep_for(std::chrono::milliseconds(responseDelay - timeDifference));
+				time = BaseLib::HelperFunctions::getTime();
+			}
+		}
+		rxPacketInfo = _receivedPackets.getInfo(packet->destinationAddress());
+		if(rxPacketInfo)
+		{
+			int64_t timeDifference = time - rxPacketInfo->time;
+			if(timeDifference >= 0 && timeDifference < responseDelay)
+			{
+				int64_t sleepingTime = responseDelay - timeDifference;
+				if(sleepingTime > 1) sleepingTime -= 1;
+				packet->setTimeSending(time + sleepingTime + 1);
+				std::this_thread::sleep_for(std::chrono::milliseconds(sleepingTime));
+				time = BaseLib::HelperFunctions::getTime();
+			}
+			//Set time to now. This is necessary if two packets are sent after each other without a response in between
+			rxPacketInfo->time = time;
+		}
+		else if(_bl->debugLevel > 4) GD::out.printDebug("Debug: Sending HomeMatic Wired packet " + packet->hexString() + " immediately, because it seems it is no response (no packet information found).", 7);
+
+		std::shared_ptr<HMWiredPacket> receivedPacket;
+		if(!GD::physicalInterface->autoResend() && resend)
+		{
+			if(GD::physicalInterface->getFastSending())
+			{
+				for(int32_t retries = 0; retries < 3; retries++)
+				{
+					int64_t time = BaseLib::HelperFunctions::getTime();
+					std::chrono::milliseconds sleepingTime(5);
+					if(retries > 0) _sentPackets.keepAlive(packet->destinationAddress());
+					GD::physicalInterface->sendPacket(packet);
+					if(packet->type() == HMWiredPacketType::ackMessage) return std::shared_ptr<HMWiredPacket>();
+					for(int32_t i = 0; i < ((signed)busWaitingTime - 20) / 5; i++)
+					{
+						std::this_thread::sleep_for(sleepingTime);
+						receivedPacket = systemResponse ? _receivedPackets.get(0) : _receivedPackets.get(packet->destinationAddress());
+						if(receivedPacket && receivedPacket->timeReceived() >= time && receivedPacket->receiverMessageCounter() == packet->senderMessageCounter())
+						{
+							return receivedPacket;
+						}
+					}
+				}
+			}
+			else
+			{
+				for(int32_t retries = 0; retries < 3; retries++)
+				{
+					int64_t time = BaseLib::HelperFunctions::getTime();
+					std::chrono::milliseconds sleepingTime(5);
+					if(retries > 0) _sentPackets.keepAlive(packet->destinationAddress());
+					GD::physicalInterface->sendPacket(packet);
+					if(packet->type() == HMWiredPacketType::ackMessage) return std::shared_ptr<HMWiredPacket>();
+					for(int32_t i = 0; i < 8; i++)
+					{
+						if(i == 5) sleepingTime = std::chrono::milliseconds(25);
+						std::this_thread::sleep_for(sleepingTime);
+						receivedPacket = systemResponse ? _receivedPackets.get(0) : _receivedPackets.get(packet->destinationAddress());
+						if(receivedPacket && receivedPacket->timeReceived() >= time && receivedPacket->receiverMessageCounter() == packet->senderMessageCounter())
+						{
+							return receivedPacket;
+						}
+					}
+				}
+			}
+			std::shared_ptr<HMWiredPeer> peer = getPeer(packet->destinationAddress());
+			if(peer) peer->serviceMessages->setUnreach(true, false);
+		}
+		else
+		{
+			int64_t time = BaseLib::HelperFunctions::getTime();
+			std::chrono::milliseconds sleepingTime(5);
+			GD::physicalInterface->sendPacket(packet);
+			if(packet->type() == HMWiredPacketType::ackMessage) return std::shared_ptr<HMWiredPacket>();
+			for(int32_t i = 0; i < 12; i++)
+			{
+				if(i == 5) sleepingTime = std::chrono::milliseconds(25);
+				std::this_thread::sleep_for(sleepingTime);
+				receivedPacket = systemResponse ? _receivedPackets.get(0) : _receivedPackets.get(packet->destinationAddress());
+				if(receivedPacket && receivedPacket->timeReceived() >= time && receivedPacket->receiverMessageCounter() == packet->senderMessageCounter())
+				{
+					return receivedPacket;
+				}
+			}
+		}
+	}
+	catch(const std::exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+    return std::shared_ptr<HMWiredPacket>();
+}
+
+void HMWiredCentral::lockBus()
+{
+	try
+	{
+		std::vector<uint8_t> payload = { 0x7A };
+		std::shared_ptr<HMWiredPacket> packet(new HMWiredPacket(HMWiredPacketType::iMessage, _address, 0xFFFFFFFF, true, _messageCounter[0]++, 0, 0, payload));
+		sendPacket(packet, false);
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		packet.reset(new HMWiredPacket(HMWiredPacketType::iMessage, _address, 0xFFFFFFFF, true, _messageCounter[0]++, 0, 0, payload));
+		sendPacket(packet, false);
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	}
+	catch(const std::exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+}
+
+void HMWiredCentral::unlockBus()
+{
+	try
+	{
+		std::vector<uint8_t> payload = { 0x5A };
+		std::this_thread::sleep_for(std::chrono::milliseconds(30));
+		std::shared_ptr<HMWiredPacket> packet(new HMWiredPacket(HMWiredPacketType::iMessage, _address, 0xFFFFFFFF, true, _messageCounter[0]++, 0, 0, payload));
+		sendPacket(packet, false);
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		packet.reset(new HMWiredPacket(HMWiredPacketType::iMessage, _address, 0xFFFFFFFF, true, _messageCounter[0]++, 0, 0, payload));
+		sendPacket(packet, false);
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	}
+	catch(const std::exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+}
+
+uint8_t HMWiredCentral::getMessageCounter(int32_t destinationAddress)
+{
+	try
+	{
+		std::shared_ptr<HMWiredPeer> peer = getPeer(destinationAddress);
+		uint8_t messageCounter = 0;
+		if(peer)
+		{
+			messageCounter = peer->getMessageCounter();
+			peer->setMessageCounter(messageCounter + 1);
+		}
+		else messageCounter = _messageCounter[destinationAddress]++;
+		return messageCounter;
+	}
+	catch(const std::exception& ex)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+	}
+	catch(BaseLib::Exception& ex)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+	}
+	catch(...)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+	}
+	return 0;
+}
+
+std::shared_ptr<HMWiredPacket> HMWiredCentral::getResponse(uint8_t command, int32_t destinationAddress, bool synchronizationBit)
+{
+	try
+	{
+		std::vector<uint8_t> payload({command});
+		return getResponse(payload, destinationAddress, synchronizationBit);
+	}
+	catch(const std::exception& ex)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+	}
+	catch(BaseLib::Exception& ex)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+	}
+	catch(...)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+	}
+	return std::shared_ptr<HMWiredPacket>();
+}
+
+std::shared_ptr<HMWiredPacket> HMWiredCentral::getResponse(std::vector<uint8_t>& payload, int32_t destinationAddress, bool synchronizationBit)
+{
+	std::shared_ptr<HMWiredPeer> peer = getPeer(destinationAddress);
+	try
+	{
+		if(peer) peer->ignorePackets = true;
+		std::shared_ptr<HMWiredPacket> request(new HMWiredPacket(HMWiredPacketType::iMessage, _address, destinationAddress, synchronizationBit, getMessageCounter(destinationAddress), 0, 0, payload));
+		std::shared_ptr<HMWiredPacket> response = sendPacket(request, true);
+		if(response && response->type() != HMWiredPacketType::ackMessage) sendOK(response->senderMessageCounter(), destinationAddress);
+		if(peer) peer->ignorePackets = false;
+		return response;
+	}
+	catch(const std::exception& ex)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+	}
+	catch(BaseLib::Exception& ex)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+	}
+	catch(...)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+	}
+	if(peer) peer->ignorePackets = false;
+	return std::shared_ptr<HMWiredPacket>();
+}
+
+std::shared_ptr<HMWiredPacket> HMWiredCentral::getResponse(std::shared_ptr<HMWiredPacket> packet, bool systemResponse)
+{
+	std::shared_ptr<HMWiredPeer> peer = getPeer(packet->destinationAddress());
+	try
+	{
+		if(peer) peer->ignorePackets = true;
+		std::shared_ptr<HMWiredPacket> request(packet);
+		std::shared_ptr<HMWiredPacket> response = sendPacket(request, true, systemResponse);
+		if(response && response->type() != HMWiredPacketType::ackMessage && response->type() != HMWiredPacketType::system) sendOK(response->senderMessageCounter(), packet->destinationAddress());
+		if(peer) peer->ignorePackets = false;
+		return response;
+	}
+	catch(const std::exception& ex)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+	}
+	catch(BaseLib::Exception& ex)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+	}
+	catch(...)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+	}
+	if(peer) peer->ignorePackets = false;
+	return std::shared_ptr<HMWiredPacket>();
+}
+
+std::vector<uint8_t> HMWiredCentral::readEEPROM(int32_t deviceAddress, int32_t eepromAddress)
+{
+	std::shared_ptr<HMWiredPeer> peer = getPeer(deviceAddress);
+	try
+	{
+		if(peer) peer->ignorePackets = true;
+		std::vector<uint8_t> payload;
+		payload.push_back(0x52); //Command read EEPROM
+		payload.push_back(eepromAddress >> 8);
+		payload.push_back(eepromAddress & 0xFF);
+		payload.push_back(0x10); //Bytes to read
+		std::shared_ptr<HMWiredPacket> request(new HMWiredPacket(HMWiredPacketType::iMessage, _address, deviceAddress, false, getMessageCounter(deviceAddress), 0, 0, payload));
+		std::shared_ptr<HMWiredPacket> response = sendPacket(request, true);
+		if(response)
+		{
+			sendOK(response->senderMessageCounter(), deviceAddress);
+			if(peer) peer->ignorePackets = false;
+			return *response->payload();
+		}
+	}
+	catch(const std::exception& ex)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+	}
+	catch(BaseLib::Exception& ex)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+	}
+	catch(...)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+	}
+	if(peer) peer->ignorePackets = false;
+	return std::vector<uint8_t>();
+}
+
+bool HMWiredCentral::writeEEPROM(int32_t deviceAddress, int32_t eepromAddress, std::vector<uint8_t>& data)
+{
+	std::shared_ptr<HMWiredPeer> peer = getPeer(deviceAddress);
+	try
+	{
+		if(data.size() > 32)
+		{
+			GD::out.printError("Error: HomeMatic Wired Device " + std::to_string(_deviceId) + ": Could not write data to EEPROM. Data size is larger than 32 bytes.");
+			return false;
+		}
+		if(peer) peer->ignorePackets = true;
+		std::vector<uint8_t> payload;
+		payload.push_back(0x57); //Command write EEPROM
+		payload.push_back(eepromAddress >> 8);
+		payload.push_back(eepromAddress & 0xFF);
+		payload.push_back(data.size()); //Bytes to write
+		payload.insert(payload.end(), data.begin(), data.end());
+		std::shared_ptr<HMWiredPacket> request(new HMWiredPacket(HMWiredPacketType::iMessage, _address, deviceAddress, false, getMessageCounter(deviceAddress), 0, 0, payload));
+		std::shared_ptr<HMWiredPacket> response = sendPacket(request, true);
+		if(response)
+		{
+			if(peer) peer->ignorePackets = false;
+			return true;
+		}
+	}
+	catch(const std::exception& ex)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+	}
+	catch(BaseLib::Exception& ex)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+	}
+	catch(...)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+	}
+	if(peer) peer->ignorePackets = false;
+	return false;
+}
+
+void HMWiredCentral::sendOK(int32_t messageCounter, int32_t destinationAddress)
+{
+	try
+	{
+		std::vector<uint8_t> payload;
+		std::shared_ptr<HMWiredPacket> ackPacket(new HMWiredPacket(HMWiredPacketType::ackMessage, _address, destinationAddress, false, 0, messageCounter, 0, payload));
+		sendPacket(ackPacket, false);
+	}
+	catch(const std::exception& ex)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+	}
+	catch(BaseLib::Exception& ex)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+	}
+	catch(...)
+	{
+		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+	}
+}
+
+void HMWiredCentral::saveMessageCounters()
+{
+	try
+	{
+		std::vector<uint8_t> serializedData;
+		serializeMessageCounters(serializedData);
+		saveVariable(2, serializedData);
+	}
+	catch(const std::exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+}
+
+void HMWiredCentral::serializeMessageCounters(std::vector<uint8_t>& encodedData)
+{
+	try
+	{
+		BaseLib::BinaryEncoder encoder(_bl);
+		encoder.encodeInteger(encodedData, _messageCounter.size());
+		for(std::unordered_map<int32_t, uint8_t>::const_iterator i = _messageCounter.begin(); i != _messageCounter.end(); ++i)
+		{
+			encoder.encodeInteger(encodedData, i->first);
+			encoder.encodeByte(encodedData, i->second);
+		}
+	}
+	catch(const std::exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+}
+
+void HMWiredCentral::unserializeMessageCounters(std::shared_ptr<std::vector<char>> serializedData)
+{
+	try
+	{
+		BaseLib::BinaryDecoder decoder(_bl);
+		uint32_t position = 0;
+		uint32_t messageCounterSize = decoder.decodeInteger(*serializedData, position);
+		for(uint32_t i = 0; i < messageCounterSize; i++)
+		{
+			int32_t index = decoder.decodeInteger(*serializedData, position);
+			_messageCounter[index] = decoder.decodeByte(*serializedData, position);
+		}
+	}
+	catch(const std::exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+}
+
+void HMWiredCentral::savePeers(bool full)
+{
+	try
+	{
+		_peersMutex.lock();
+		for(std::unordered_map<int32_t, std::shared_ptr<BaseLib::Systems::Peer>>::iterator i = _peers.begin(); i != _peers.end(); ++i)
+		{
+			//Necessary, because peers can be assigned to multiple virtual devices
+			if(i->second->getParentID() != _deviceId) continue;
+			//We are always printing this, because the init script needs it
+			GD::out.printMessage("(Shutdown) => Saving HomeMatic Wired peer " + std::to_string(i->second->getID()));
+			i->second->save(full, full, full);
+		}
+	}
+	catch(const std::exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+	_peersMutex.unlock();
+}
+
+std::string HMWiredCentral::handleCliCommand(std::string command)
 {
 	try
 	{
@@ -246,14 +992,14 @@ std::string HMWiredCentral::handleCLICommand(std::string command)
 				_currentPeer.reset();
 				return "Peer unselected.\n";
 			}
-			return _currentPeer->handleCLICommand(command);
+			return _currentPeer->handleCliCommand(command);
 		}
 		if(command == "help" || command == "h")
 		{
 			stringStream << "List of commands:" << std::endl << std::endl;
 			stringStream << "For more information about the individual command type: COMMAND help" << std::endl << std::endl;
 			stringStream << "peers list (ls)\t\tList all peers" << std::endl;
-			stringStream << "peers reset (pr)\tUnpair a peer and reset it to factory defaults" << std::endl;
+			stringStream << "peers reset (prs)\tUnpair a peer and reset it to factory defaults" << std::endl;
 			stringStream << "peers select (ps)\tSelect a peer" << std::endl;
 			stringStream << "peers setname (pn)\tName a peer" << std::endl;
 			stringStream << "peers unpair (pup)\tUnpair a peer" << std::endl;
@@ -476,7 +1222,7 @@ std::string HMWiredCentral::handleCLICommand(std::string command)
 					<< std::setw(unreachWidth) << " "
 					<< std::endl;
 				_peersMutex.lock();
-				for(std::map<uint64_t, std::shared_ptr<BaseLib::Systems::Peer>>::iterator i = _peersByID.begin(); i != _peersByID.end(); ++i)
+				for(std::map<uint64_t, std::shared_ptr<BaseLib::Systems::Peer>>::iterator i = _peersById.begin(); i != _peersById.end(); ++i)
 				{
 					if(filterType == "id")
 					{
@@ -663,7 +1409,7 @@ std::string HMWiredCentral::handleCLICommand(std::string command)
 			if(all)
 			{
 				_peersMutex.lock();
-				for(std::map<uint64_t, std::shared_ptr<BaseLib::Systems::Peer>>::iterator i = _peersByID.begin(); i != _peersByID.end(); ++i)
+				for(std::map<uint64_t, std::shared_ptr<BaseLib::Systems::Peer>>::iterator i = _peersById.begin(); i != _peersById.end(); ++i)
 				{
 					if(i->second->firmwareUpdateAvailable()) ids.push_back(i->first);
 				}
@@ -754,7 +1500,7 @@ std::shared_ptr<HMWiredPeer> HMWiredCentral::createPeer(int32_t address, int32_t
 {
 	try
 	{
-		std::shared_ptr<HMWiredPeer> peer(new HMWiredPeer(_deviceID, true, this));
+		std::shared_ptr<HMWiredPeer> peer(new HMWiredPeer(_deviceId, true, this));
 		peer->setAddress(address);
 		peer->setFirmwareVersion(firmwareVersion);
 		peer->setDeviceType(deviceType);
@@ -1064,61 +1810,6 @@ void HMWiredCentral::updateFirmware(uint64_t id)
     _updateMode = false;
 }
 
-bool HMWiredCentral::knowsDevice(std::string serialNumber)
-{
-	if(serialNumber == _serialNumber) return true;
-	_peersMutex.lock();
-	try
-	{
-		if(_peersBySerial.find(serialNumber) != _peersBySerial.end())
-		{
-			_peersMutex.unlock();
-			return true;
-		}
-	}
-	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(...)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-	}
-	_peersMutex.unlock();
-	return false;
-}
-
-bool HMWiredCentral::knowsDevice(uint64_t id)
-{
-	_peersMutex.lock();
-	try
-	{
-		if(_peersByID.find(id) != _peersByID.end())
-		{
-			_peersMutex.unlock();
-			return true;
-		}
-	}
-	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(...)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-	}
-	_peersMutex.unlock();
-	return false;
-}
-
 void HMWiredCentral::handleAnnounce(std::shared_ptr<HMWiredPacket> packet)
 {
 	try
@@ -1246,7 +1937,7 @@ bool HMWiredCentral::peerInit(std::shared_ptr<HMWiredPeer> peer)
 		{
 			_peers[address] = peer;
 			if(!peer->getSerialNumber().empty()) _peersBySerial[peer->getSerialNumber()] = peer;
-			_peersByID[peer->getID()] = peer;
+			_peersById[peer->getID()] = peer;
 			peer->setMessageCounter(_messageCounter[address]);
 			_messageCounter.erase(address);
 		}
@@ -1429,7 +2120,7 @@ PVariable HMWiredCentral::deleteDevice(int32_t clientID, uint64_t peerID, int32_
 		if(flags & 0x01) peer->reset();
 		deletePeer(id);
 
-		if(knowsDevice(id)) return Variable::createError(-1, "Error deleting peer. See log for more details.");
+		if(peerExists(id)) return Variable::createError(-1, "Error deleting peer. See log for more details.");
 
 		return PVariable(new Variable(VariableType::tVoid));
 	}
@@ -1454,7 +2145,7 @@ PVariable HMWiredCentral::deleteDevice(int32_t clientID, uint64_t peerID, int32_
 	{
 		PVariable description(new Variable(VariableType::tStruct));
 
-		description->structValue->insert(StructElement("ID", PVariable(new Variable(_deviceID))));
+		description->structValue->insert(StructElement("ID", PVariable(new Variable(_deviceId))));
 		description->structValue->insert(StructElement("ADDRESS", PVariable(new Variable(_serialNumber))));
 
 		PVariable variable = PVariable(new Variable(VariableType::tArray));
@@ -1517,7 +2208,7 @@ PVariable HMWiredCentral::getDeviceInfo(int32_t clientID, uint64_t id, std::map<
 			std::vector<std::shared_ptr<HMWiredPeer>> peers;
 			//Copy all peers first, because listDevices takes very long and we don't want to lock _peersMutex too long
 			_peersMutex.lock();
-			for(std::map<uint64_t, std::shared_ptr<BaseLib::Systems::Peer>>::iterator i = _peersByID.begin(); i != _peersByID.end(); ++i)
+			for(std::map<uint64_t, std::shared_ptr<BaseLib::Systems::Peer>>::iterator i = _peersById.begin(); i != _peersById.end(); ++i)
 			{
 				peers.push_back(std::dynamic_pointer_cast<HMWiredPeer>(i->second));
 			}

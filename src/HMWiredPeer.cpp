@@ -28,12 +28,12 @@
  */
 
 #include "HMWiredPeer.h"
-#include "Devices/HMWiredCentral.h"
+#include "HMWiredCentral.h"
 #include "GD.h"
 
 namespace HMWired
 {
-std::shared_ptr<BaseLib::Systems::Central> HMWiredPeer::getCentral()
+std::shared_ptr<BaseLib::Systems::ICentral> HMWiredPeer::getCentral()
 {
 	try
 	{
@@ -53,28 +53,7 @@ std::shared_ptr<BaseLib::Systems::Central> HMWiredPeer::getCentral()
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 	}
-	return std::shared_ptr<BaseLib::Systems::Central>();
-}
-
-std::shared_ptr<BaseLib::Systems::LogicalDevice> HMWiredPeer::getDevice(int32_t address)
-{
-	try
-	{
-		return GD::family->get(address);
-	}
-	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(...)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-	}
-	return std::shared_ptr<BaseLib::Systems::LogicalDevice>();
+	return std::shared_ptr<BaseLib::Systems::ICentral>();
 }
 
 HMWiredPeer::HMWiredPeer(uint32_t parentID, bool centralFeatures, IPeerEventSink* eventHandler) : Peer(GD::bl, parentID, centralFeatures, eventHandler)
@@ -234,7 +213,7 @@ void HMWiredPeer::initializeLinkConfig(int32_t channel, std::shared_ptr<BaseLib:
     }
 }
 
-std::string HMWiredPeer::handleCLICommand(std::string command)
+std::string HMWiredPeer::handleCliCommand(std::string command)
 {
 	try
 	{
@@ -1329,12 +1308,12 @@ int32_t HMWiredPeer::getFreeEEPROMAddress(int32_t channel, bool isSender)
     return -1;
 }
 
-void HMWiredPeer::loadVariables(BaseLib::Systems::LogicalDevice* device, std::shared_ptr<BaseLib::Database::DataTable> rows)
+void HMWiredPeer::loadVariables(BaseLib::Systems::ICentral* central, std::shared_ptr<BaseLib::Database::DataTable>& rows)
 {
 	try
 	{
 		if(!rows) rows = _bl->db->getPeerVariables(_peerID);
-		Peer::loadVariables(device, rows);
+		Peer::loadVariables(central, rows);
 		_databaseMutex.lock();
 		for(BaseLib::Database::DataTable::iterator row = rows->begin(); row != rows->end(); ++row)
 		{
@@ -1364,11 +1343,12 @@ void HMWiredPeer::loadVariables(BaseLib::Systems::LogicalDevice* device, std::sh
 	_databaseMutex.unlock();
 }
 
-bool HMWiredPeer::load(BaseLib::Systems::LogicalDevice* device)
+bool HMWiredPeer::load(BaseLib::Systems::ICentral* central)
 {
 	try
 	{
-		loadVariables((HMWiredDevice*)device);
+		std::shared_ptr<BaseLib::Database::DataTable> rows;
+		loadVariables(central, rows);
 
 		_rpcDevice = GD::rpcDevices.find(_deviceType, _firmwareVersion, -1);
 		if(!_rpcDevice)
@@ -1465,7 +1445,7 @@ void HMWiredPeer::serializePeers(std::vector<uint8_t>& encodedData)
 				encoder.encodeInteger(encodedData, (*j)->channel);
 				encoder.encodeInteger(encodedData, (*j)->physicalIndexOffset);
 				encoder.encodeString(encodedData, (*j)->serialNumber);
-				encoder.encodeBoolean(encodedData, (*j)->hidden);
+				encoder.encodeBoolean(encodedData, (*j)->isVirtual);
 				encoder.encodeString(encodedData, (*j)->linkName);
 				encoder.encodeString(encodedData, (*j)->linkDescription);
 				encoder.encodeInteger(encodedData, (*j)->configEEPROMAddress);
@@ -1508,7 +1488,7 @@ void HMWiredPeer::unserializePeers(std::shared_ptr<std::vector<char>> serialized
 				basicPeer->channel = decoder.decodeInteger(*serializedData, position);
 				basicPeer->physicalIndexOffset = decoder.decodeInteger(*serializedData, position);
 				basicPeer->serialNumber = decoder.decodeString(*serializedData, position);
-				basicPeer->hidden = decoder.decodeBoolean(*serializedData, position);
+				basicPeer->isVirtual = decoder.decodeBoolean(*serializedData, position);
 				_peers[channel].push_back(basicPeer);
 				basicPeer->linkName = decoder.decodeString(*serializedData, position);
 				basicPeer->linkDescription = decoder.decodeString(*serializedData, position);
@@ -1922,7 +1902,7 @@ PVariable HMWiredPeer::getValueFromDevice(PParameter& parameter, int32_t channel
 			payload.at(frame->channelIndex - 9) = (uint8_t)channel + _rpcDevice->functions.at(channel)->physicalChannelIndexOffset;
 		}
 
-		std::shared_ptr<HMWiredPacket> packet(new HMWiredPacket(HMWiredPacketType::iMessage, getCentral()->physicalAddress(), _address, false, _messageCounter, 0, 0, payload));
+		std::shared_ptr<HMWiredPacket> packet(new HMWiredPacket(HMWiredPacketType::iMessage, getCentral()->getAddress(), _address, false, _messageCounter, 0, 0, payload));
 		for(BinaryPayloads::iterator i = frame->binaryPayloads.begin(); i != frame->binaryPayloads.end(); ++i)
 		{
 			if((*i)->constValueInteger > -1)
@@ -2452,7 +2432,7 @@ PVariable HMWiredPeer::setValue(int32_t clientID, uint32_t channel, std::string 
 			payload.at(frame->channelIndex - 9) = (uint8_t)channel + _rpcDevice->functions.at(channel)->physicalChannelIndexOffset;
 		}
 
-		std::shared_ptr<HMWiredPacket> packet(new HMWiredPacket(HMWiredPacketType::iMessage, getCentral()->physicalAddress(), _address, false, _messageCounter, 0, 0, payload));
+		std::shared_ptr<HMWiredPacket> packet(new HMWiredPacket(HMWiredPacketType::iMessage, getCentral()->getAddress(), _address, false, _messageCounter, 0, 0, payload));
 		for(BinaryPayloads::iterator i = frame->binaryPayloads.begin(); i != frame->binaryPayloads.end(); ++i)
 		{
 			if((*i)->constValueInteger > -1)
