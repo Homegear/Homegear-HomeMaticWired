@@ -52,10 +52,6 @@ public:
 	std::shared_ptr<HMWiredPeer> getPeer(int32_t address);
 	std::shared_ptr<HMWiredPeer> getPeer(uint64_t id);
 	std::shared_ptr<HMWiredPeer> getPeer(std::string serialNumber);
-	virtual void loadPeers();
-	virtual void savePeers(bool full);
-	virtual void loadVariables();
-	virtual void saveVariables();
 	virtual void saveMessageCounters();
 	virtual void serializeMessageCounters(std::vector<uint8_t>& encodedData);
 	virtual void unserializeMessageCounters(std::shared_ptr<std::vector<char>> serializedData);
@@ -116,6 +112,11 @@ protected:
 
 	std::mutex _announceThreadMutex;
 	std::thread _announceThread;
+
+	virtual void loadPeers();
+	virtual void savePeers(bool full);
+	virtual void loadVariables();
+	virtual void saveVariables();
 
 	std::shared_ptr<HMWiredPeer> createPeer(int32_t address, int32_t firmwareVersion, BaseLib::Systems::LogicalDeviceType deviceType, std::string serialNumber, bool save = true);
 	virtual void worker();

@@ -65,49 +65,12 @@ void HMWired::dispose()
 	DeviceFamily::dispose();
 
 	GD::physicalInterface.reset();
-	_central.reset();
 	GD::rpcDevices.clear();
 }
 
-std::shared_ptr<BaseLib::Systems::ICentral> HMWired::getCentral() { return _central; }
-
-void HMWired::load()
+std::shared_ptr<BaseLib::Systems::ICentral> HMWired::initializeCentral(uint32_t deviceId, int32_t address, std::string serialNumber)
 {
-	try
-	{
-		std::shared_ptr<BaseLib::Database::DataTable> rows = _bl->db->getDevices((uint32_t)getFamily());
-		for(BaseLib::Database::DataTable::iterator row = rows->begin(); row != rows->end(); ++row)
-		{
-			uint32_t deviceId = row->second.at(0)->intValue;
-			GD::out.printMessage("Loading HomeMatic Wired device " + std::to_string(deviceId));
-			int32_t address = row->second.at(1)->intValue;
-			std::string serialNumber = row->second.at(2)->textValue;
-			uint32_t deviceType = row->second.at(3)->intValue;
-
-			if(deviceType == 0xFEFFFFFD || deviceType == 0xFFFFFFFD) //Test for device type in case there are devices from older Homegear versions in the database
-			{
-				_central = std::shared_ptr<HMWiredCentral>(new HMWiredCentral(deviceId, serialNumber, address, this));
-				_central->load();
-				_central->loadPeers();
-			}
-		}
-		if(GD::physicalInterface)
-		{
-			if(!_central) createCentral();
-		}
-	}
-	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(...)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-	}
+	return std::shared_ptr<HMWiredCentral>(new HMWiredCentral(deviceId, serialNumber, address, this));
 }
 
 void HMWired::createCentral()
@@ -138,29 +101,6 @@ void HMWired::createCentral()
     }
 }
 
-std::string HMWired::handleCliCommand(std::string& command)
-{
-	try
-	{
-		std::ostringstream stringStream;
-		if(!_central) return "Error: No central exists.\n";
-		return _central->handleCliCommand(command);
-	}
-	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(...)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    }
-    return "Error executing command. See log file for more details.\n";
-}
-
 PVariable HMWired::getPairingMethods()
 {
 	try
@@ -184,4 +124,4 @@ PVariable HMWired::getPairingMethods()
 	}
 	return Variable::createError(-32500, "Unknown application error.");
 }
-} /* namespace HMWired */
+}
