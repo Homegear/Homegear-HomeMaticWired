@@ -43,7 +43,6 @@ class HMWired : public BaseLib::Systems::DeviceFamily
 public:
 	HMWired(BaseLib::Obj* bl, BaseLib::Systems::DeviceFamily::IFamilyEventSink* eventHandler);
 	virtual ~HMWired();
-	virtual bool init();
 	virtual void dispose();
 
 	virtual PVariable getPairingMethods();

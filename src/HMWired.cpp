@@ -42,7 +42,6 @@ HMWired::HMWired(BaseLib::Obj* bl, BaseLib::Systems::DeviceFamily::IFamilyEventS
 	GD::out.init(bl);
 	GD::out.setPrefix("Module HomeMatic Wired: ");
 	GD::out.printDebug("Debug: Loading module...");
-	GD::rpcDevices.init(_bl, this);
 	_physicalInterfaces.reset(new Interfaces(bl, _settings->getPhysicalInterfaceSettings()));
 }
 
@@ -51,21 +50,12 @@ HMWired::~HMWired()
 
 }
 
-bool HMWired::init()
-{
-	GD::out.printInfo("Loading XML RPC devices...");
-	GD::rpcDevices.load();
-	if(GD::rpcDevices.empty()) return false;
-	return true;
-}
-
 void HMWired::dispose()
 {
 	if(_disposed) return;
 	DeviceFamily::dispose();
 
 	GD::physicalInterface.reset();
-	GD::rpcDevices.clear();
 }
 
 std::shared_ptr<BaseLib::Systems::ICentral> HMWired::initializeCentral(uint32_t deviceId, int32_t address, std::string serialNumber)

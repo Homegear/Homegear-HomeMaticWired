@@ -47,7 +47,6 @@ public:
 	static BaseLib::Obj* bl;
 	static HMWired* family;
 	static std::shared_ptr<IHMWiredInterface> physicalInterface;
-	static BaseLib::DeviceDescription::Devices rpcDevices;
 	static BaseLib::Output out;
 private:
 	GD();
