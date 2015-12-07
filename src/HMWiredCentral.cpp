@@ -1034,7 +1034,7 @@ std::string HMWiredCentral::handleCliCommand(std::string command)
 				index++;
 			}
 
-			PVariable result = searchDevices(-1);
+			PVariable result = searchDevices(nullptr);
 			if(result->errorStruct) stringStream << "Error: " << result->structValue->at("faultString")->stringValue << std::endl;
 			else stringStream << "Search completed successfully." << std::endl;
 			return stringStream.str();
@@ -1418,7 +1418,7 @@ std::string HMWiredCentral::handleCliCommand(std::string command)
 					stringStream << "All peers are up to date." << std::endl;
 					return stringStream.str();
 				}
-				result = updateFirmware(-1, ids, false);
+				result = updateFirmware(nullptr, ids, false);
 			}
 			else if(!peerExists(peerID)) stringStream << "This peer is not paired to this central." << std::endl;
 			else
@@ -1430,7 +1430,7 @@ std::string HMWiredCentral::handleCliCommand(std::string command)
 					return stringStream.str();
 				}
 				ids.push_back(peerID);
-				result = updateFirmware(-1, ids, false);
+				result = updateFirmware(nullptr, ids, false);
 			}
 			if(!result) stringStream << "Unknown error." << std::endl;
 			else if(result->errorStruct) stringStream << result->structValue->at("faultString")->stringValue << std::endl;
@@ -1842,7 +1842,7 @@ void HMWiredCentral::handleAnnounce(std::shared_ptr<HMWiredPacket> packet)
 		{
 			PVariable deviceDescriptions(new Variable(VariableType::tArray));
 			peer->restoreLinks();
-			std::shared_ptr<std::vector<PVariable>> descriptions = peer->getDeviceDescriptions(-1, true, std::map<std::string, bool>());
+			std::shared_ptr<std::vector<PVariable>> descriptions = peer->getDeviceDescriptions(nullptr, true, std::map<std::string, bool>());
 			if(!descriptions)
 			{
 				_peerInitMutex.unlock();
@@ -1971,7 +1971,7 @@ bool HMWiredCentral::peerInit(std::shared_ptr<HMWiredPeer> peer)
 	return false;
 }
 
-PVariable HMWiredCentral::addLink(int32_t clientID, std::string senderSerialNumber, int32_t senderChannelIndex, std::string receiverSerialNumber, int32_t receiverChannelIndex, std::string name, std::string description)
+PVariable HMWiredCentral::addLink(BaseLib::PRpcClientInfo clientInfo, std::string senderSerialNumber, int32_t senderChannelIndex, std::string receiverSerialNumber, int32_t receiverChannelIndex, std::string name, std::string description)
 {
 	try
 	{
@@ -1981,7 +1981,7 @@ PVariable HMWiredCentral::addLink(int32_t clientID, std::string senderSerialNumb
 		std::shared_ptr<HMWiredPeer> receiver = getPeer(receiverSerialNumber);
 		if(!sender) return Variable::createError(-2, "Sender device not found.");
 		if(!receiver) return Variable::createError(-2, "Receiver device not found.");
-		return addLink(clientID, sender->getID(), senderChannelIndex, receiver->getID(), receiverChannelIndex, name, description);
+		return addLink(clientInfo, sender->getID(), senderChannelIndex, receiver->getID(), receiverChannelIndex, name, description);
 	}
 	catch(const std::exception& ex)
 	{
@@ -1998,7 +1998,7 @@ PVariable HMWiredCentral::addLink(int32_t clientID, std::string senderSerialNumb
 	return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable HMWiredCentral::addLink(int32_t clientID, uint64_t senderID, int32_t senderChannelIndex, uint64_t receiverID, int32_t receiverChannelIndex, std::string name, std::string description)
+PVariable HMWiredCentral::addLink(BaseLib::PRpcClientInfo clientInfo, uint64_t senderID, int32_t senderChannelIndex, uint64_t receiverID, int32_t receiverChannelIndex, std::string name, std::string description)
 {
 	try
 	{
@@ -2081,7 +2081,7 @@ PVariable HMWiredCentral::addLink(int32_t clientID, uint64_t senderID, int32_t s
 	return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable HMWiredCentral::deleteDevice(int32_t clientID, std::string serialNumber, int32_t flags)
+PVariable HMWiredCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, std::string serialNumber, int32_t flags)
 {
 	try
 	{
@@ -2089,7 +2089,7 @@ PVariable HMWiredCentral::deleteDevice(int32_t clientID, std::string serialNumbe
 		std::shared_ptr<HMWiredPeer> peer = getPeer(serialNumber);
 		if(!peer) return PVariable(new Variable(VariableType::tVoid));
 
-		return deleteDevice(clientID, peer->getID(), flags);
+		return deleteDevice(clientInfo, peer->getID(), flags);
 	}
 	catch(const std::exception& ex)
     {
@@ -2106,7 +2106,7 @@ PVariable HMWiredCentral::deleteDevice(int32_t clientID, std::string serialNumbe
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable HMWiredCentral::deleteDevice(int32_t clientID, uint64_t peerID, int32_t flags)
+PVariable HMWiredCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, uint64_t peerID, int32_t flags)
 {
 	try
 	{
@@ -2189,7 +2189,7 @@ PVariable HMWiredCentral::deleteDevice(int32_t clientID, uint64_t peerID, int32_
     return Variable::createError(-32500, "Unknown application error.");
 }*/
 
-PVariable HMWiredCentral::getDeviceInfo(int32_t clientID, uint64_t id, std::map<std::string, bool> fields)
+PVariable HMWiredCentral::getDeviceInfo(BaseLib::PRpcClientInfo clientInfo, uint64_t id, std::map<std::string, bool> fields)
 {
 	try
 	{
@@ -2198,7 +2198,7 @@ PVariable HMWiredCentral::getDeviceInfo(int32_t clientID, uint64_t id, std::map<
 			std::shared_ptr<HMWiredPeer> peer(getPeer(id));
 			if(!peer) return Variable::createError(-2, "Unknown device.");
 
-			return peer->getDeviceInfo(clientID, fields);
+			return peer->getDeviceInfo(clientInfo, fields);
 		}
 		else
 		{
@@ -2217,7 +2217,7 @@ PVariable HMWiredCentral::getDeviceInfo(int32_t clientID, uint64_t id, std::map<
 			{
 				//listDevices really needs a lot of resources, so wait a little bit after each device
 				std::this_thread::sleep_for(std::chrono::milliseconds(3));
-				PVariable info = (*i)->getDeviceInfo(clientID, fields);
+				PVariable info = (*i)->getDeviceInfo(clientInfo, fields);
 				if(!info) continue;
 				array->arrayValue->push_back(info);
 			}
@@ -2240,7 +2240,7 @@ PVariable HMWiredCentral::getDeviceInfo(int32_t clientID, uint64_t id, std::map<
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable HMWiredCentral::putParamset(int32_t clientID, std::string serialNumber, int32_t channel, ParameterGroup::Type::Enum type, std::string remoteSerialNumber, int32_t remoteChannel, PVariable paramset)
+PVariable HMWiredCentral::putParamset(BaseLib::PRpcClientInfo clientInfo, std::string serialNumber, int32_t channel, ParameterGroup::Type::Enum type, std::string remoteSerialNumber, int32_t remoteChannel, PVariable paramset)
 {
 	try
 	{
@@ -2252,7 +2252,7 @@ PVariable HMWiredCentral::putParamset(int32_t clientID, std::string serialNumber
 			if(!remotePeer) return Variable::createError(-3, "Remote peer is unknown.");
 			remoteID = remotePeer->getID();
 		}
-		if(peer) return peer->putParamset(clientID, channel, type, remoteID, remoteChannel, paramset);
+		if(peer) return peer->putParamset(clientInfo, channel, type, remoteID, remoteChannel, paramset);
 		return Variable::createError(-2, "Unknown device.");
 	}
 	catch(const std::exception& ex)
@@ -2270,12 +2270,12 @@ PVariable HMWiredCentral::putParamset(int32_t clientID, std::string serialNumber
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable HMWiredCentral::putParamset(int32_t clientID, uint64_t peerID, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel, PVariable paramset)
+PVariable HMWiredCentral::putParamset(BaseLib::PRpcClientInfo clientInfo, uint64_t peerID, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel, PVariable paramset)
 {
 	try
 	{
 		std::shared_ptr<HMWiredPeer> peer(getPeer(peerID));
-		if(peer) return peer->putParamset(clientID, channel, type, remoteID, remoteChannel, paramset);
+		if(peer) return peer->putParamset(clientInfo, channel, type, remoteID, remoteChannel, paramset);
 		return Variable::createError(-2, "Unknown device.");
 	}
 	catch(const std::exception& ex)
@@ -2293,7 +2293,7 @@ PVariable HMWiredCentral::putParamset(int32_t clientID, uint64_t peerID, int32_t
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable HMWiredCentral::removeLink(int32_t clientID, std::string senderSerialNumber, int32_t senderChannelIndex, std::string receiverSerialNumber, int32_t receiverChannelIndex)
+PVariable HMWiredCentral::removeLink(BaseLib::PRpcClientInfo clientInfo, std::string senderSerialNumber, int32_t senderChannelIndex, std::string receiverSerialNumber, int32_t receiverChannelIndex)
 {
 	try
 	{
@@ -2303,7 +2303,7 @@ PVariable HMWiredCentral::removeLink(int32_t clientID, std::string senderSerialN
 		std::shared_ptr<HMWiredPeer> receiver = getPeer(receiverSerialNumber);
 		if(!sender) return Variable::createError(-2, "Sender device not found.");
 		if(!receiver) return Variable::createError(-2, "Receiver device not found.");
-		return removeLink(clientID, sender->getID(), senderChannelIndex, receiver->getID(), receiverChannelIndex);
+		return removeLink(clientInfo, sender->getID(), senderChannelIndex, receiver->getID(), receiverChannelIndex);
 	}
 	catch(const std::exception& ex)
 	{
@@ -2320,7 +2320,7 @@ PVariable HMWiredCentral::removeLink(int32_t clientID, std::string senderSerialN
 	return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable HMWiredCentral::removeLink(int32_t clientID, uint64_t senderID, int32_t senderChannelIndex, uint64_t receiverID, int32_t receiverChannelIndex)
+PVariable HMWiredCentral::removeLink(BaseLib::PRpcClientInfo clientInfo, uint64_t senderID, int32_t senderChannelIndex, uint64_t receiverID, int32_t receiverChannelIndex)
 {
 	try
 	{
@@ -2359,7 +2359,7 @@ PVariable HMWiredCentral::removeLink(int32_t clientID, uint64_t senderID, int32_
 	return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable HMWiredCentral::searchDevices(int32_t clientID)
+PVariable HMWiredCentral::searchDevices(BaseLib::PRpcClientInfo clientInfo)
 {
 	try
 	{
@@ -2420,7 +2420,7 @@ PVariable HMWiredCentral::searchDevices(int32_t clientID)
 				for(std::vector<std::shared_ptr<HMWiredPeer>>::iterator i = newPeers.begin(); i != newPeers.end(); ++i)
 				{
 					(*i)->restoreLinks();
-					std::shared_ptr<std::vector<PVariable>> descriptions = (*i)->getDeviceDescriptions(clientID, true, std::map<std::string, bool>());
+					std::shared_ptr<std::vector<PVariable>> descriptions = (*i)->getDeviceDescriptions(clientInfo, true, std::map<std::string, bool>());
 					if(!descriptions) continue;
 					for(std::vector<PVariable>::iterator j = descriptions->begin(); j != descriptions->end(); ++j)
 					{
@@ -2463,7 +2463,7 @@ PVariable HMWiredCentral::searchDevices(int32_t clientID)
 	return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable HMWiredCentral::updateFirmware(int32_t clientID, std::vector<uint64_t> ids, bool manual)
+PVariable HMWiredCentral::updateFirmware(BaseLib::PRpcClientInfo clientInfo, std::vector<uint64_t> ids, bool manual)
 {
 	try
 	{

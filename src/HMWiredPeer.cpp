@@ -196,7 +196,7 @@ void HMWiredPeer::initializeLinkConfig(int32_t channel, std::shared_ptr<BaseLib:
 		{
 			variables->structValue->insert(StructElement(i->second->id, i->second->logical->getDefaultValue()));
 		}
-		PVariable result = putParamset(-1, channel, ParameterGroup::Type::Enum::link, peer->id, peer->channel, variables);
+		PVariable result = putParamset(nullptr, channel, ParameterGroup::Type::Enum::link, peer->id, peer->channel, variables);
 		if(result->errorStruct) GD::out.printError("Error: " + result->structValue->at("faultString")->stringValue);
 	}
 	catch(const std::exception& ex)
@@ -2093,11 +2093,11 @@ void HMWiredPeer::packetReceived(std::shared_ptr<HMWiredPacket> packet)
     }
 }
 
-PVariable HMWiredPeer::getDeviceInfo(int32_t clientID, std::map<std::string, bool> fields)
+PVariable HMWiredPeer::getDeviceInfo(BaseLib::PRpcClientInfo clientInfo, std::map<std::string, bool> fields)
 {
 	try
 	{
-		PVariable info(Peer::getDeviceInfo(clientID, fields));
+		PVariable info(Peer::getDeviceInfo(clientInfo, fields));
 		if(info->errorStruct) return info;
 
 		if(fields.empty() || fields.find("INTERFACE") != fields.end()) info->structValue->insert(StructElement("INTERFACE", PVariable(new Variable(GD::physicalInterface->getID()))));
@@ -2119,7 +2119,7 @@ PVariable HMWiredPeer::getDeviceInfo(int32_t clientID, std::map<std::string, boo
     return PVariable();
 }
 
-PVariable HMWiredPeer::getParamset(int32_t clientID, int32_t channel,ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel)
+PVariable HMWiredPeer::getParamset(BaseLib::PRpcClientInfo clientInfo, int32_t channel,ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel)
 {
 	try
 	{
@@ -2190,7 +2190,7 @@ PVariable HMWiredPeer::getParamset(int32_t clientID, int32_t channel,ParameterGr
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable HMWiredPeer::getParamsetDescription(int32_t clientID, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel)
+PVariable HMWiredPeer::getParamsetDescription(BaseLib::PRpcClientInfo clientInfo, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel)
 {
 	try
 	{
@@ -2219,7 +2219,7 @@ PVariable HMWiredPeer::getParamsetDescription(int32_t clientID, int32_t channel,
 			}
 		}
 
-		return Peer::getParamsetDescription(clientID, parameterGroup);
+		return Peer::getParamsetDescription(clientInfo, parameterGroup);
 	}
 	catch(const std::exception& ex)
     {
@@ -2236,7 +2236,7 @@ PVariable HMWiredPeer::getParamsetDescription(int32_t clientID, int32_t channel,
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable HMWiredPeer::putParamset(int32_t clientID, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel, PVariable variables, bool onlyPushing)
+PVariable HMWiredPeer::putParamset(BaseLib::PRpcClientInfo clientInfo, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel, PVariable variables, bool onlyPushing)
 {
 	try
 	{
@@ -2288,7 +2288,7 @@ PVariable HMWiredPeer::putParamset(int32_t clientID, int32_t channel, ParameterG
 			for(Struct::iterator i = variables->structValue->begin(); i != variables->structValue->end(); ++i)
 			{
 				if(i->first.empty() || !i->second) continue;
-				setValue(clientID, channel, i->first, i->second);
+				setValue(clientInfo, channel, i->first, i->second);
 			}
 		}
 		else if(type == ParameterGroup::Type::Enum::link)
@@ -2345,11 +2345,11 @@ PVariable HMWiredPeer::putParamset(int32_t clientID, int32_t channel, ParameterG
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable HMWiredPeer::setValue(int32_t clientID, uint32_t channel, std::string valueKey, PVariable value)
+PVariable HMWiredPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t channel, std::string valueKey, PVariable value)
 {
 	try
 	{
-		Peer::setValue(clientID, channel, valueKey, value);
+		Peer::setValue(clientInfo, channel, valueKey, value);
 		if(_disposing) return Variable::createError(-32500, "Peer is disposing.");
 		if(!_centralFeatures) return Variable::createError(-2, "Not a central peer.");
 		if(valueKey.empty()) return Variable::createError(-5, "Value key is empty.");
@@ -2408,7 +2408,7 @@ PVariable HMWiredPeer::setValue(int32_t clientID, uint32_t channel, std::string 
 				toggleValue = toggleRPCParam->convertFromPacket(temp);
 			}
 			else return Variable::createError(-6, "Toggle parameter has to be of type boolean, float or integer.");
-			return setValue(clientID, channel, toggleCast->parameter, toggleValue);
+			return setValue(clientInfo, channel, toggleCast->parameter, toggleValue);
 		}
 		if(rpcParameter->setPackets.empty()) return Variable::createError(-6, "parameter is read only");
 		std::string setRequest = rpcParameter->setPackets.at(0)->id;
