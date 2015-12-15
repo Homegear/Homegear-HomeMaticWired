@@ -35,7 +35,7 @@
 namespace HMWired
 {
 
-HMWired::HMWired(BaseLib::Obj* bl, BaseLib::Systems::DeviceFamily::IFamilyEventSink* eventHandler) : BaseLib::Systems::DeviceFamily(bl, eventHandler, HMWIRED_FAMILY_ID, "HomeMatic Wired")
+HMWired::HMWired(BaseLib::Obj* bl, BaseLib::Systems::DeviceFamily::IFamilyEventSink* eventHandler) : BaseLib::Systems::DeviceFamily(bl, eventHandler, HMWIRED_FAMILY_ID, HMWIRED_FAMILY_NAME)
 {
 	GD::bl = bl;
 	GD::family = this;

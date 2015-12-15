@@ -31,6 +31,7 @@
 #define GD_H_
 
 #define HMWIRED_FAMILY_ID 1
+#define HMWIRED_FAMILY_NAME "HomeMatic Wired"
 
 #include "homegear-base/BaseLib.h"
 #include "HMWired.h"
