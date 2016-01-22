@@ -47,10 +47,10 @@ HMWiredCentral::~HMWiredCentral()
 	dispose();
 
 	_updateFirmwareThreadMutex.lock();
-	if(_updateFirmwareThread.joinable()) _updateFirmwareThread.join();
+	_bl->threadManager.join(_updateFirmwareThread);
 	_updateFirmwareThreadMutex.unlock();
 	_announceThreadMutex.lock();
-	if(_announceThread.joinable()) _announceThread.join();
+	_bl->threadManager.join(_announceThread);
 	_announceThreadMutex.unlock();
 }
 
@@ -63,11 +63,8 @@ void HMWiredCentral::dispose(bool wait)
 		GD::out.printDebug("Removing device " + std::to_string(_deviceId) + " from physical device's event queue...");
 		if(GD::physicalInterface) GD::physicalInterface->removeEventHandler(_physicalInterfaceEventhandler);
 		_stopWorkerThread = true;
-		if(_workerThread.joinable())
-		{
-			GD::out.printDebug("Debug: Waiting for worker thread of device " + std::to_string(_deviceId) + "...");
-			_workerThread.join();
-		}
+		GD::out.printDebug("Debug: Waiting for worker thread of device " + std::to_string(_deviceId) + "...");
+		_bl->threadManager.join(_workerThread);
 	}
     catch(const std::exception& ex)
     {
@@ -94,8 +91,7 @@ void HMWiredCentral::init()
 
 		_messageCounter[0] = 0; //Broadcast message counter
 
-		_workerThread = std::thread(&HMWiredCentral::worker, this);
-		BaseLib::Threads::setThreadPriority(_bl, _workerThread.native_handle(), _bl->settings.workerThreadPriority(), _bl->settings.workerThreadPolicy());
+		_bl->threadManager.start(_workerThread, true, _bl->settings.workerThreadPriority(), _bl->settings.workerThreadPolicy(), &HMWiredCentral::worker, this);
 	}
 	catch(const std::exception& ex)
 	{
@@ -383,8 +379,8 @@ bool HMWiredCentral::onPacketReceived(std::string& senderID, std::shared_ptr<Bas
 		else if(hmWiredPacket->messageType() == 0x41 && !_pairing)
 		{
 			_announceThreadMutex.lock();
-			if(_announceThread.joinable()) _announceThread.join();
-			_announceThread = std::thread(&HMWiredCentral::handleAnnounce, this, hmWiredPacket);
+			_bl->threadManager.join(_announceThread);
+			_bl->threadManager.start(_announceThread, false, &HMWiredCentral::handleAnnounce, this, hmWiredPacket);
 			_announceThreadMutex.unlock();
 		}
 	}
@@ -2474,8 +2470,8 @@ PVariable HMWiredCentral::updateFirmware(BaseLib::PRpcClientInfo clientInfo, std
 			_updateFirmwareThreadMutex.unlock();
 			return Variable::createError(-32500, "Central is disposing.");
 		}
-		if(_updateFirmwareThread.joinable()) _updateFirmwareThread.join();
-		_updateFirmwareThread = std::thread(&HMWiredCentral::updateFirmwares, this, ids);
+		_bl->threadManager.join(_updateFirmwareThread);
+		_bl->threadManager.start(_updateFirmwareThread, false, &HMWiredCentral::updateFirmwares, this, ids);
 		_updateFirmwareThreadMutex.unlock();
 		return PVariable(new Variable(true));
 	}

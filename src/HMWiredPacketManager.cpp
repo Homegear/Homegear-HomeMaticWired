@@ -41,8 +41,7 @@ HMWiredPacketManager::HMWiredPacketManager()
 {
 	try
 	{
-		_workerThread = std::thread(&HMWiredPacketManager::worker, this);
-		BaseLib::Threads::setThreadPriority(GD::bl, _workerThread.native_handle(), GD::bl->settings.workerThreadPriority(), GD::bl->settings.workerThreadPolicy());
+		GD::bl->threadManager.start(_workerThread, true, GD::bl->settings.workerThreadPriority(), GD::bl->settings.workerThreadPolicy(), &HMWiredPacketManager::worker, this);
 	}
 	catch(const std::exception& ex)
     {
@@ -61,7 +60,7 @@ HMWiredPacketManager::HMWiredPacketManager()
 HMWiredPacketManager::~HMWiredPacketManager()
 {
 	if(!_disposing) dispose();
-	if(_workerThread.joinable()) _workerThread.join();
+	GD::bl->threadManager.join(_workerThread);
 }
 
 void HMWiredPacketManager::dispose(bool wait)

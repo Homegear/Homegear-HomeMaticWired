@@ -58,7 +58,7 @@ HMW_LGW::~HMW_LGW()
 	try
 	{
 		_stopCallbackThread = true;
-		if(_listenThread.joinable()) _listenThread.join();
+		_bl->threadManager.join(_listenThread);
 		aesCleanup();
 	}
     catch(const std::exception& ex)
@@ -320,8 +320,8 @@ void HMW_LGW::startListening()
 		_socket->setReadTimeout(1000000);
 		_out.printDebug("Connecting to HMW-LGW with hostname " + _settings->host + " on port " + _settings->port + "...");
 		_stopped = false;
-		_listenThread = std::thread(&HMW_LGW::listen, this);
-		if(_settings->listenThreadPriority > -1) BaseLib::Threads::setThreadPriority(_bl, _listenThread.native_handle(), _settings->listenThreadPriority, _settings->listenThreadPolicy);
+		if(_settings->listenThreadPriority > -1) _bl->threadManager.start(_listenThread, true, _settings->listenThreadPriority, _settings->listenThreadPolicy, &HMW_LGW::listen, this);
+		else _bl->threadManager.start(_listenThread, true, &HMW_LGW::listen, this);
 		IPhysicalInterface::startListening();
 	}
     catch(const std::exception& ex)
@@ -373,7 +373,7 @@ void HMW_LGW::stopListening()
 	try
 	{
 		_stopCallbackThread = true;
-		if(_listenThread.joinable()) _listenThread.join();
+		_bl->threadManager.join(_listenThread);
 		_stopCallbackThread = false;
 		_socket->close();
 		aesCleanup();

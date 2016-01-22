@@ -50,11 +50,8 @@ RS485::~RS485()
 {
 	try
 	{
-		if(_listenThread.joinable())
-		{
-			_stopCallbackThread = true;
-			_listenThread.join();
-		}
+		_stopCallbackThread = true;
+		_bl->threadManager.join(_listenThread);
 		closeDevice();
 	}
     catch(const std::exception& ex)
@@ -676,8 +673,8 @@ void RS485::startListening()
 			closeGPIO(2);
 		}
 		_stopped = false;
-		_listenThread = std::thread(&RS485::listen, this);
-		BaseLib::Threads::setThreadPriority(_bl, _listenThread.native_handle(), _settings->listenThreadPriority, _settings->listenThreadPolicy);
+		if(_settings->listenThreadPriority > -1) _bl->threadManager.start(_listenThread, true, _settings->listenThreadPriority, _settings->listenThreadPolicy, &RS485::listen, this);
+		else _bl->threadManager.start(_listenThread, true, &RS485::listen, this);
 		IPhysicalInterface::startListening();
 	}
     catch(const std::exception& ex)
@@ -698,11 +695,8 @@ void RS485::stopListening()
 {
 	try
 	{
-		if(_listenThread.joinable())
-		{
-			_stopCallbackThread = true;
-			_listenThread.join();
-		}
+		_stopCallbackThread = true;
+		_bl->threadManager.join(_listenThread);
 		_stopCallbackThread = false;
 		if(_fileDescriptor->descriptor != -1) closeDevice();
 		if(gpioDefined(1) && _settings->oneWay) closeGPIO(1);

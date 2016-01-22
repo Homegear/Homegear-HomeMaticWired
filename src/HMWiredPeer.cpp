@@ -90,8 +90,8 @@ void HMWiredPeer::worker()
 					if(!_disposing && !deleting && _lastPing < time) //Check that _lastPing wasn't set in putParamset after locking the mutex
 					{
 						_lastPing = time; //Set here to avoid race condition between worker thread and ping thread
-						if(_pingThread.joinable()) _pingThread.join();
-						_pingThread = std::thread(&HMWiredPeer::pingThread, this);
+						_bl->threadManager.join(_pingThread);
+						_bl->threadManager.start(_pingThread, false, &HMWiredPeer::pingThread, this);
 					}
 					_pingThreadMutex.unlock();
 				}
@@ -115,8 +115,8 @@ void HMWiredPeer::worker()
 							if(!_disposing && !deleting && _lastPing < time) //Check that _lastPing wasn't set in putParamset after locking the mutex
 							{
 								_lastPing = time; //Set here to avoid race condition between worker thread and ping thread
-								if(_pingThread.joinable()) _pingThread.join();
-								_pingThread = std::thread(&HMWiredPeer::pingThread, this);
+								_bl->threadManager.join(_pingThread);
+								_bl->threadManager.start(_pingThread, false, &HMWiredPeer::pingThread, this);
 							}
 							_pingThreadMutex.unlock();
 						}
@@ -2288,7 +2288,7 @@ PVariable HMWiredPeer::putParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
 			for(Struct::iterator i = variables->structValue->begin(); i != variables->structValue->end(); ++i)
 			{
 				if(i->first.empty() || !i->second) continue;
-				setValue(clientInfo, channel, i->first, i->second);
+				setValue(clientInfo, channel, i->first, i->second, true);
 			}
 		}
 		else if(type == ParameterGroup::Type::Enum::link)
@@ -2345,11 +2345,11 @@ PVariable HMWiredPeer::putParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable HMWiredPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t channel, std::string valueKey, PVariable value)
+PVariable HMWiredPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t channel, std::string valueKey, PVariable value, bool wait)
 {
 	try
 	{
-		Peer::setValue(clientInfo, channel, valueKey, value);
+		Peer::setValue(clientInfo, channel, valueKey, value, wait);
 		if(_disposing) return Variable::createError(-32500, "Peer is disposing.");
 		if(!_centralFeatures) return Variable::createError(-2, "Not a central peer.");
 		if(valueKey.empty()) return Variable::createError(-5, "Value key is empty.");
@@ -2408,7 +2408,7 @@ PVariable HMWiredPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 				toggleValue = toggleRPCParam->convertFromPacket(temp);
 			}
 			else return Variable::createError(-6, "Toggle parameter has to be of type boolean, float or integer.");
-			return setValue(clientInfo, channel, toggleCast->parameter, toggleValue);
+			return setValue(clientInfo, channel, toggleCast->parameter, toggleValue, wait);
 		}
 		if(rpcParameter->setPackets.empty()) return Variable::createError(-6, "parameter is read only");
 		std::string setRequest = rpcParameter->setPackets.at(0)->id;
@@ -2504,7 +2504,7 @@ PVariable HMWiredPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 		if(!response)
 		{
 			GD::out.printWarning("Error: Error sending packet to peer " + std::to_string(_peerID) + ". Peer did not respond.");
-			return Variable::createError(-32500, "Error sending packet to peer. Peer did not respond.");
+			return Variable::createError(-100, "Error sending packet to peer. Peer did not respond.");
 		}
 		else
 		{
