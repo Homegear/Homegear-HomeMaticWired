@@ -56,12 +56,12 @@ std::shared_ptr<BaseLib::Systems::ICentral> HMWiredPeer::getCentral()
 	return std::shared_ptr<BaseLib::Systems::ICentral>();
 }
 
-HMWiredPeer::HMWiredPeer(uint32_t parentID, bool centralFeatures, IPeerEventSink* eventHandler) : Peer(GD::bl, parentID, centralFeatures, eventHandler)
+HMWiredPeer::HMWiredPeer(uint32_t parentID, IPeerEventSink* eventHandler) : Peer(GD::bl, parentID, eventHandler)
 {
 	_lastPing = BaseLib::HelperFunctions::getTime() - (BaseLib::HelperFunctions::getRandomNumber(1, 60) * 10000);
 }
 
-HMWiredPeer::HMWiredPeer(int32_t id, int32_t address, std::string serialNumber, uint32_t parentID, bool centralFeatures, IPeerEventSink* eventHandler) : Peer(GD::bl, id, address, serialNumber, parentID, centralFeatures, eventHandler)
+HMWiredPeer::HMWiredPeer(int32_t id, int32_t address, std::string serialNumber, uint32_t parentID, IPeerEventSink* eventHandler) : Peer(GD::bl, id, address, serialNumber, parentID, eventHandler)
 {
 	_lastPing = BaseLib::HelperFunctions::getTime() - (BaseLib::HelperFunctions::getRandomNumber(1, 60) * 10000);
 }
@@ -75,7 +75,7 @@ HMWiredPeer::~HMWiredPeer()
 
 void HMWiredPeer::worker()
 {
-	if(!_centralFeatures || _disposing) return;
+	if(_disposing) return;
 	try
 	{
 		int64_t time = BaseLib::HelperFunctions::getTime();
@@ -98,7 +98,7 @@ void HMWiredPeer::worker()
 			}
 			else
 			{
-				if(_centralFeatures && configCentral[0].find("POLLING") != configCentral[0].end() && configCentral[0].at("POLLING").data.size() > 0 && configCentral[0].at("POLLING").data.at(0) > 0 && configCentral[0].find("POLLING_INTERVAL") != configCentral[0].end())
+				if(configCentral[0].find("POLLING") != configCentral[0].end() && configCentral[0].at("POLLING").data.size() > 0 && configCentral[0].at("POLLING").data.at(0) > 0 && configCentral[0].find("POLLING_INTERVAL") != configCentral[0].end())
 				{
 					//Polling is enabled
 					BaseLib::Systems::RPCConfigurationParameter* parameter = &configCentral[0]["POLLING_INTERVAL"];
@@ -1997,7 +1997,7 @@ void HMWiredPeer::packetReceived(std::shared_ptr<HMWiredPacket> packet)
 	try
 	{
 		if(ignorePackets || !packet || packet->type() != HMWiredPacketType::iMessage) return;
-		if(!_centralFeatures || _disposing) return;
+		if(_disposing) return;
 		if(packet->senderAddress() != _address) return;
 		if(!_rpcDevice) return;
 		std::shared_ptr<HMWiredCentral> central(std::dynamic_pointer_cast<HMWiredCentral>(getCentral()));
@@ -2241,7 +2241,6 @@ PVariable HMWiredPeer::putParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
 	try
 	{
 		if(_disposing) return Variable::createError(-32500, "Peer is disposing.");
-		if(!_centralFeatures) return Variable::createError(-2, "Not a central peer.");
 		if(channel < 0) channel = 0;
 		if(remoteChannel < 0) remoteChannel = 0;
 		Functions::iterator functionIterator = _rpcDevice->functions.find(channel);
@@ -2351,7 +2350,6 @@ PVariable HMWiredPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 	{
 		Peer::setValue(clientInfo, channel, valueKey, value, wait);
 		if(_disposing) return Variable::createError(-32500, "Peer is disposing.");
-		if(!_centralFeatures) return Variable::createError(-2, "Not a central peer.");
 		if(valueKey.empty()) return Variable::createError(-5, "Value key is empty.");
 		if(channel == 0 && serviceMessages->set(valueKey, value->booleanValue)) return PVariable(new Variable(VariableType::tVoid));
 		if(valuesCentral.find(channel) == valuesCentral.end()) return Variable::createError(-2, "Unknown channel.");

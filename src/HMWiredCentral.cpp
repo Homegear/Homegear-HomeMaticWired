@@ -195,7 +195,7 @@ void HMWiredCentral::loadPeers()
 			int32_t peerID = row->second.at(0)->intValue;
 			GD::out.printMessage("Loading HomeMatic Wired peer " + std::to_string(peerID));
 			int32_t address = row->second.at(2)->intValue;
-			std::shared_ptr<HMWiredPeer> peer(new HMWiredPeer(peerID, address, row->second.at(3)->textValue, _deviceId, true, this));
+			std::shared_ptr<HMWiredPeer> peer(new HMWiredPeer(peerID, address, row->second.at(3)->textValue, _deviceId, this));
 			if(!peer->load(this)) continue;
 			if(!peer->getRpcDevice()) continue;
 			_peersMutex.lock();
@@ -1495,7 +1495,7 @@ std::shared_ptr<HMWiredPeer> HMWiredCentral::createPeer(int32_t address, int32_t
 {
 	try
 	{
-		std::shared_ptr<HMWiredPeer> peer(new HMWiredPeer(_deviceId, true, this));
+		std::shared_ptr<HMWiredPeer> peer(new HMWiredPeer(_deviceId, this));
 		peer->setAddress(address);
 		peer->setFirmwareVersion(firmwareVersion);
 		peer->setDeviceType(deviceType);

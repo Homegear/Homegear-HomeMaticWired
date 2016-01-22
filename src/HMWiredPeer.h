@@ -61,8 +61,8 @@ public:
 class HMWiredPeer : public BaseLib::Systems::Peer
 {
 public:
-	HMWiredPeer(uint32_t parentID, bool centralFeatures, IPeerEventSink* eventHandler);
-	HMWiredPeer(int32_t id, int32_t address, std::string serialNumber, uint32_t parentID, bool centralFeatures, IPeerEventSink* eventHandler);
+	HMWiredPeer(uint32_t parentID, IPeerEventSink* eventHandler);
+	HMWiredPeer(int32_t id, int32_t address, std::string serialNumber, uint32_t parentID, IPeerEventSink* eventHandler);
 	virtual ~HMWiredPeer();
 
 	//Features
