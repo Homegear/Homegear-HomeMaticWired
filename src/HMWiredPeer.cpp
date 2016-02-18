@@ -1259,7 +1259,6 @@ void HMWiredPeer::removePeer(int32_t channel, uint64_t id, int32_t remoteChannel
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
     }
-    _databaseMutex.unlock();
 }
 
 int32_t HMWiredPeer::getFreeEEPROMAddress(int32_t channel, bool isSender)
@@ -1314,7 +1313,6 @@ void HMWiredPeer::loadVariables(BaseLib::Systems::ICentral* central, std::shared
 	{
 		if(!rows) rows = _bl->db->getPeerVariables(_peerID);
 		Peer::loadVariables(central, rows);
-		_databaseMutex.lock();
 		for(BaseLib::Database::DataTable::iterator row = rows->begin(); row != rows->end(); ++row)
 		{
 			switch(row->second.at(2)->intValue)
@@ -1340,7 +1338,6 @@ void HMWiredPeer::loadVariables(BaseLib::Systems::ICentral* central, std::shared
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
     }
-	_databaseMutex.unlock();
 }
 
 bool HMWiredPeer::load(BaseLib::Systems::ICentral* central)
