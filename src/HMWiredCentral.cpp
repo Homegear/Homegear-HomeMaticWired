@@ -2036,6 +2036,7 @@ PVariable HMWiredCentral::addLink(BaseLib::PRpcClientInfo clientInfo, uint64_t s
 		senderPeer->channel = senderChannelIndex;
 		senderPeer->physicalIndexOffset = senderFunction->physicalChannelIndexOffset;
 		senderPeer->serialNumber = sender->getSerialNumber();
+		senderPeer->isSender = true;
 		senderPeer->linkDescription = description;
 		senderPeer->linkName = name;
 		senderPeer->configEEPROMAddress = receiver->getFreeEEPROMAddress(receiverChannelIndex, false);

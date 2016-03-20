@@ -1950,18 +1950,26 @@ PParameterGroup HMWiredPeer::getParameterSet(int32_t channel, ParameterGroup::Ty
 	{
 		PFunction rpcFunction = _rpcDevice->functions.at(channel);
 		PParameterGroup parameterGroup;
-		if(rpcFunction->parameterGroupSelector && rpcFunction->alternativeFunction)
+		if(rpcFunction->parameterGroupSelector && !rpcFunction->alternativeFunctions.empty())
 		{
 			std::vector<uint8_t> value = getMasterConfigParameter(channel - rpcFunction->channel, rpcFunction->parameterGroupSelector->physical->memoryIndex, rpcFunction->parameterGroupSelector->physical->memoryChannelStep, rpcFunction->parameterGroupSelector->physical->size);
-			if(value.at(0))
+			BaseLib::Systems::RPCConfigurationParameter& parameter = configCentral[channel][rpcFunction->parameterGroupSelector->id];
+			if(!parameter.rpcParameter) parameterGroup = rpcFunction->getParameterGroup(type);
+			else
 			{
-				parameterGroup = rpcFunction->alternativeFunction->getParameterGroup(type);
-				if(!parameterGroup)
+				int32_t index = parameter.rpcParameter->logical->type == BaseLib::DeviceDescription::ILogical::Type::Enum::tBoolean ? parameter.rpcParameter->convertFromPacket(value, false)->booleanValue : parameter.rpcParameter->convertFromPacket(value, false)->integerValue;
+				if(index > 0)
 				{
-					GD::out.printWarning("Parameter set of type " + std::to_string(type) + " not found in alternative config for channel " + std::to_string(channel));
-					return PParameterGroup();
-				}
-			} else parameterGroup = rpcFunction->getParameterGroup(type);
+					index--;
+					if(index >= rpcFunction->alternativeFunctions.size()) index = rpcFunction->alternativeFunctions.size() - 1;
+					parameterGroup = rpcFunction->alternativeFunctions.at(index)->getParameterGroup(type);
+					if(!parameterGroup)
+					{
+						GD::out.printWarning("Parameter set of type " + std::to_string(type) + " not found in alternative config for channel " + std::to_string(channel));
+						return PParameterGroup();
+					}
+				} else parameterGroup = rpcFunction->getParameterGroup(type);
+			}
 		}
 		else
 		{
@@ -2197,23 +2205,12 @@ PVariable HMWiredPeer::getParamsetDescription(BaseLib::PRpcClientInfo clientInfo
 		if(functionIterator == _rpcDevice->functions.end()) return Variable::createError(-2, "Unknown channel");
 		if(type == ParameterGroup::Type::none) type = ParameterGroup::Type::link;
 		PFunction rpcFunction = functionIterator->second;
-		PParameterGroup parameterGroup = rpcFunction->getParameterGroup(type);
+		PParameterGroup parameterGroup = getParameterSet(channel, type);
 		if(!parameterGroup) return Variable::createError(-3, "Unknown parameter set");
 		if(type == ParameterGroup::Type::link && remoteID > 0)
 		{
 			std::shared_ptr<BaseLib::Systems::BasicPeer> remotePeer = getPeer(channel, remoteID, remoteChannel);
 			if(!remotePeer) return Variable::createError(-2, "Unknown remote peer.");
-		}
-
-		if(rpcFunction->parameterGroupSelector && rpcFunction->alternativeFunction)
-		{
-			std::vector<uint8_t> value = getMasterConfigParameter(channel - rpcFunction->channel, rpcFunction->parameterGroupSelector->physical->memoryIndex, rpcFunction->parameterGroupSelector->physical->memoryChannelStep, rpcFunction->parameterGroupSelector->physical->size);
-			GD::out.printDebug("Debug: Special parameter is " + std::to_string(value.at(0)));
-			if(value.at(0))
-			{
-				parameterGroup = rpcFunction->alternativeFunction->getParameterGroup(type);
-				if(!parameterGroup) return Variable::createError(-3, "Unknown parameter set");
-			}
 		}
 
 		return Peer::getParamsetDescription(clientInfo, parameterGroup);
