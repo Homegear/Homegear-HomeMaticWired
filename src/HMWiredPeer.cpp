@@ -1961,7 +1961,7 @@ PParameterGroup HMWiredPeer::getParameterSet(int32_t channel, ParameterGroup::Ty
 				if(index > 0)
 				{
 					index--;
-					if(index >= rpcFunction->alternativeFunctions.size()) index = rpcFunction->alternativeFunctions.size() - 1;
+					if((unsigned)index >= rpcFunction->alternativeFunctions.size()) index = rpcFunction->alternativeFunctions.size() - 1;
 					parameterGroup = rpcFunction->alternativeFunctions.at(index)->getParameterGroup(type);
 					if(!parameterGroup)
 					{
