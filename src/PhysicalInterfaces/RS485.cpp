@@ -44,6 +44,8 @@ RS485::RS485(std::shared_ptr<BaseLib::Systems::PhysicalInterfaceSettings> settin
 		settings->listenThreadPriority = 45;
 		settings->listenThreadPolicy = SCHED_FIFO;
 	}
+
+	memset(&_termios, 0, sizeof(termios));
 }
 
 RS485::~RS485()

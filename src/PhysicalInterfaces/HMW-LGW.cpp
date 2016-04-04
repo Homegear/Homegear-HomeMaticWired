@@ -178,7 +178,9 @@ void HMW_LGW::sendPacket(std::shared_ptr<BaseLib::Systems::Packet> packet)
 				getResponse(requestPacket, responsePacket, _packetIndex - 1, 0x72);
 				if(!responsePacket.empty())
 				{
-					std::shared_ptr<HMWiredPacket> responseHmwiredPacket(new HMWiredPacket(responsePacket, true, BaseLib::HelperFunctions::getTime(), hmwiredPacket->destinationAddress(), hmwiredPacket->senderAddress()));
+					int32_t senderAddress = hmwiredPacket->destinationAddress();
+					int32_t destinationAddress = hmwiredPacket->senderAddress();
+					std::shared_ptr<HMWiredPacket> responseHmwiredPacket(new HMWiredPacket(responsePacket, true, BaseLib::HelperFunctions::getTime(), senderAddress, destinationAddress));
 					_lastPacketReceived = BaseLib::HelperFunctions::getTime();
 					raisePacketReceived(responseHmwiredPacket);
 					break;

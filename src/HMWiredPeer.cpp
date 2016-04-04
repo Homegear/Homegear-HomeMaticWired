@@ -941,7 +941,7 @@ std::vector<uint8_t> HMWiredPeer::getConfigParameter(double index, double size, 
 			//The round is necessary, because for example (uint32_t)(0.2 * 10) is 1
 			uint32_t bitSize = std::lround(size * 10);
 			if(bitSize > 8) bitSize = 8;
-			uint32_t indexBits = std::lround(index * 10) % 10;
+			uint32_t indexBits = std::lround(index * 10) % 8;
 			if(indexBits + bitSize > 8) //Split over two bytes
 			{
 				result.push_back(configBlock->at(intByteIndex) >> indexBits);

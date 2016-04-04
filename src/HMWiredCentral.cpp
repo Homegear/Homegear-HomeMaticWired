@@ -408,7 +408,8 @@ void HMWiredCentral::deletePeer(uint64_t id)
 		peer->deleting = true;
 		PVariable deviceAddresses(new Variable(VariableType::tArray));
 		deviceAddresses->arrayValue->push_back(PVariable(new Variable(peer->getSerialNumber())));
-		for(Functions::iterator i = peer->getRpcDevice()->functions.begin(); i != peer->getRpcDevice()->functions.end(); ++i)
+		std::shared_ptr<HomegearDevice> rpcDevice = peer->getRpcDevice();
+		for(Functions::iterator i = rpcDevice->functions.begin(); i != rpcDevice->functions.end(); ++i)
 		{
 			deviceAddresses->arrayValue->push_back(PVariable(new Variable(peer->getSerialNumber() + ":" + std::to_string(i->first))));
 		}
@@ -416,7 +417,7 @@ void HMWiredCentral::deletePeer(uint64_t id)
 		deviceInfo->structValue->insert(StructElement("ID", PVariable(new Variable((int32_t)peer->getID()))));
 		PVariable channels(new Variable(VariableType::tArray));
 		deviceInfo->structValue->insert(StructElement("CHANNELS", channels));
-		for(Functions::iterator i = peer->getRpcDevice()->functions.begin(); i != peer->getRpcDevice()->functions.end(); ++i)
+		for(Functions::iterator i = rpcDevice->functions.begin(); i != rpcDevice->functions.end(); ++i)
 		{
 			channels->arrayValue->push_back(PVariable(new Variable(i->first)));
 		}
@@ -1883,7 +1884,8 @@ bool HMWiredCentral::peerInit(std::shared_ptr<HMWiredPeer> peer)
 			return false;
 		}
 
-		for(Parameters::iterator j = peer->getRpcDevice()->functions.at(0)->configParameters->parameters.begin(); j != peer->getRpcDevice()->functions.at(0)->configParameters->parameters.end(); ++j)
+		PConfigParameters configParameters = peer->getRpcDevice()->functions.at(0)->configParameters;
+		for(Parameters::iterator j = configParameters->parameters.begin(); j != configParameters->parameters.end(); ++j)
 		{
 			if(j->second->logical->setToValueOnPairingExists)
 			{
@@ -2006,10 +2008,12 @@ PVariable HMWiredCentral::addLink(BaseLib::PRpcClientInfo clientInfo, uint64_t s
 		if(!receiver) return Variable::createError(-2, "Receiver device not found.");
 		if(senderChannelIndex < 0) senderChannelIndex = 0;
 		if(receiverChannelIndex < 0) receiverChannelIndex = 0;
-		Functions::iterator senderFunctionIterator = sender->getRpcDevice()->functions.find(senderChannelIndex);
-		if(senderFunctionIterator == sender->getRpcDevice()->functions.end()) return Variable::createError(-2, "Sender channel not found.");
-		Functions::iterator receiverFunctionIterator = receiver->getRpcDevice()->functions.find(receiverChannelIndex);
-		if(receiverFunctionIterator == receiver->getRpcDevice()->functions.end()) return Variable::createError(-2, "Receiver channel not found.");
+		std::shared_ptr<HomegearDevice> senderRpcDevice = sender->getRpcDevice();
+		std::shared_ptr<HomegearDevice> receiverRpcDevice = receiver->getRpcDevice();
+		Functions::iterator senderFunctionIterator = senderRpcDevice->functions.find(senderChannelIndex);
+		if(senderFunctionIterator == senderRpcDevice->functions.end()) return Variable::createError(-2, "Sender channel not found.");
+		Functions::iterator receiverFunctionIterator = receiverRpcDevice->functions.find(receiverChannelIndex);
+		if(receiverFunctionIterator == receiverRpcDevice->functions.end()) return Variable::createError(-2, "Receiver channel not found.");
 		PFunction senderFunction = senderFunctionIterator->second;
 		PFunction receiverFunction = receiverFunctionIterator->second;
 		if(!senderFunction || !receiverFunction || senderFunction->linkSenderFunctionTypes.size() == 0 || receiverFunction->linkReceiverFunctionTypes.size() == 0) return Variable::createError(-6, "Link not supported.");
@@ -2329,8 +2333,10 @@ PVariable HMWiredCentral::removeLink(BaseLib::PRpcClientInfo clientInfo, uint64_
 		if(!receiver) return Variable::createError(-2, "Receiver device not found.");
 		if(senderChannelIndex < 0) senderChannelIndex = 0;
 		if(receiverChannelIndex < 0) receiverChannelIndex = 0;
-		if(sender->getRpcDevice()->functions.find(senderChannelIndex) == sender->getRpcDevice()->functions.end()) return Variable::createError(-2, "Sender channel not found.");
-		if(receiver->getRpcDevice()->functions.find(receiverChannelIndex) == receiver->getRpcDevice()->functions.end()) return Variable::createError(-2, "Receiver channel not found.");
+		std::shared_ptr<HomegearDevice> senderRpcDevice = sender->getRpcDevice();
+		std::shared_ptr<HomegearDevice> receiverRpcDevice = receiver->getRpcDevice();
+		if(senderRpcDevice->functions.find(senderChannelIndex) == senderRpcDevice->functions.end()) return Variable::createError(-2, "Sender channel not found.");
+		if(receiverRpcDevice->functions.find(receiverChannelIndex) == receiverRpcDevice->functions.end()) return Variable::createError(-2, "Receiver channel not found.");
 		if(!sender->getPeer(senderChannelIndex, receiver->getID()) && !receiver->getPeer(receiverChannelIndex, sender->getID())) return Variable::createError(-6, "Devices are not paired to each other.");
 
 		sender->removePeer(senderChannelIndex, receiver->getID(), receiverChannelIndex);
