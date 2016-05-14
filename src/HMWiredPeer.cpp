@@ -2375,7 +2375,7 @@ PVariable HMWiredPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 		}
 		else if(rpcParameter->physical->operationType != IPhysical::OperationType::Enum::command) return Variable::createError(-6, "Parameter is not settable.");
 		PToggle toggleCast;
-		if(rpcParameter->casts.empty()) toggleCast = std::dynamic_pointer_cast<Toggle>(rpcParameter->casts.at(0));
+		if(!rpcParameter->casts.empty()) toggleCast = std::dynamic_pointer_cast<Toggle>(rpcParameter->casts.at(0));
 		if(toggleCast)
 		{
 			//Handle toggle parameter
@@ -2423,7 +2423,6 @@ PVariable HMWiredPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 			while((signed)payload.size() - 1 < frame->channelIndex - 9) payload.push_back(0);
 			payload.at(frame->channelIndex - 9) = (uint8_t)channel + _rpcDevice->functions.at(channel)->physicalChannelIndexOffset;
 		}
-
 		std::shared_ptr<HMWiredPacket> packet(new HMWiredPacket(HMWiredPacketType::iMessage, getCentral()->getAddress(), _address, false, _messageCounter, 0, 0, payload));
 		for(BinaryPayloads::iterator i = frame->binaryPayloads.begin(); i != frame->binaryPayloads.end(); ++i)
 		{
@@ -2491,7 +2490,6 @@ PVariable HMWiredPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 			}
 		}
 		setMessageCounter(_messageCounter + 1);
-
 		std::shared_ptr<HMWiredPacket> response = getResponse(packet);
 		if(!response)
 		{
