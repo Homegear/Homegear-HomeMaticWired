@@ -1,17 +1,17 @@
 #!/bin/sh
 SCRIPTDIR="$( cd "$(dirname $0)" && pwd )"
-FIRMWAREDIR=/tmp/HomegearTemp/rootfs/rootfs.ubi/134296466/root/firmware
+FIRMWAREDIR=/tmp/HomegearTemp/rootfs/rootfs.ubi/174024608/root/firmware
 
 if test ! -d $FIRMWAREDIR; then
 	rm -Rf /tmp/HomegearTemp
 	[ $? -ne 0 ] && exit 1
 	mkdir /tmp/HomegearTemp
 	[ $? -ne 0 ] && exit 1
-	wget -P /tmp/HomegearTemp/ http://www.eq-3.de/Downloads/Software/HM-CCU2-Firmware_Updates/HM-CCU2-2.15.2/HM-CCU-2.15.2.tar.gz
+	wget -P /tmp/HomegearTemp/ http://www.eq-3.de/Downloads/Software/HM-CCU2-Firmware_Updates/HM-CCU2%202.17.16/HM-CCU-2.17.16.tar.gz
 	[ $? -ne 0 ] && exit 1
-	tar -zxf /tmp/HomegearTemp/HM-CCU-2.15.2.tar.gz -C /tmp/HomegearTemp
+	tar -zxf /tmp/HomegearTemp/HM-CCU-2.17.16.tar.gz -C /tmp/HomegearTemp
 	[ $? -ne 0 ] && exit 1
-	rm -f /tmp/HomegearTemp/HM-CCU-2.15.2.tar.gz
+	rm -f /tmp/HomegearTemp/HM-CCU-2.17.16.tar.gz
 	
 	echo "Downloading UBI Reader..."
 	echo "(C) 2013 Jason Pruitt (Jason Pruitt), see https://github.com/jrspruitt/ubi_reader"
