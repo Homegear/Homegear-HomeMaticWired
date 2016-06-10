@@ -1807,6 +1807,7 @@ void HMWiredPeer::getValuesFromPacket(std::shared_ptr<HMWiredPacket> packet, std
 							if(!parameteGroup->getParameter((*k)->id)) continue;
 							currentFrameValues.paramsetChannels.push_back(l);
 							currentFrameValues.values[(*k)->id].channels.push_back(l);
+							std::cerr << frame->id << ' ' << (*j)->parameterId << std::endl;
 							setValues = true;
 						}
 					}
