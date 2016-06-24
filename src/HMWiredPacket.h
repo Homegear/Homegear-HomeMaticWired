@@ -30,7 +30,7 @@
 #ifndef HMWIREDPACKET_H_
 #define HMWIREDPACKET_H_
 
-#include "homegear-base/BaseLib.h"
+#include <homegear-base/BaseLib.h>
 
 #include <map>
 

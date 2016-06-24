@@ -30,7 +30,7 @@
 #ifndef HMWIRED_H_
 #define HMWIRED_H_
 
-#include "homegear-base/BaseLib.h"
+#include <homegear-base/BaseLib.h>
 
 using namespace BaseLib;
 
