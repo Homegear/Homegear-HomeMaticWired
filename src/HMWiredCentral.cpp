@@ -61,7 +61,7 @@ void HMWiredCentral::dispose(bool wait)
 		if(_disposing) return;
 		_disposing = true;
 		GD::out.printDebug("Removing device " + std::to_string(_deviceId) + " from physical device's event queue...");
-		if(GD::physicalInterface) GD::physicalInterface->removeEventHandler(_physicalInterfaceEventhandler);
+		if(GD::physicalInterface) GD::physicalInterface->removeEventHandler(_physicalInterfaceEventhandlers[GD::physicalInterface->getID()]);
 		_stopWorkerThread = true;
 		GD::out.printDebug("Debug: Waiting for worker thread of device " + std::to_string(_deviceId) + "...");
 		_bl->threadManager.join(_workerThread);
@@ -87,7 +87,7 @@ void HMWiredCentral::init()
 		if(_initialized) return; //Prevent running init two times
 		_initialized = true;
 
-		if(GD::physicalInterface) _physicalInterfaceEventhandler = GD::physicalInterface->addEventHandler((BaseLib::Systems::IPhysicalInterface::IPhysicalInterfaceEventSink*)this);
+		if(GD::physicalInterface) _physicalInterfaceEventhandlers[GD::physicalInterface->getID()] = GD::physicalInterface->addEventHandler((BaseLib::Systems::IPhysicalInterface::IPhysicalInterfaceEventSink*)this);
 
 		_messageCounter[0] = 0; //Broadcast message counter
 
