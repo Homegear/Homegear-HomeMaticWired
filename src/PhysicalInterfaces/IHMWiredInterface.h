@@ -30,7 +30,7 @@
 #ifndef IHMWIREDINTERFACE_H_
 #define IHMWIREDINTERFACE_H_
 
-#include "homegear-base/BaseLib.h"
+#include <homegear-base/BaseLib.h>
 
 namespace HMWired {
 

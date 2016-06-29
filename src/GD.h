@@ -33,7 +33,7 @@
 #define HMWIRED_FAMILY_ID 1
 #define HMWIRED_FAMILY_NAME "HomeMatic Wired"
 
-#include "homegear-base/BaseLib.h"
+#include <homegear-base/BaseLib.h>
 #include "HMWired.h"
 #include "PhysicalInterfaces/IHMWiredInterface.h"
 

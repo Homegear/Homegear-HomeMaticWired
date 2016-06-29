@@ -28,6 +28,7 @@
 			<linkParameters>hmw_input_ch_link--1</linkParameters>
 			<alternativeFunction channel="1" type="INPUT_OUTPUT" channelCount="4">
 				<properties>
+					<physicalChannelIndexOffset>-1</physicalChannelIndexOffset>
 					<linkReceiverFunctionTypes>
 						<type>SWITCH</type>
 					</linkReceiverFunctionTypes>

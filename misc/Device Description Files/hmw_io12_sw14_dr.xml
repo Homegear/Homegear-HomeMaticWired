@@ -28,19 +28,23 @@
 			<configParameters>hmw_io_ch_master--7-t7</configParameters>
 			<variables>hmw_analog_output_values--7</variables>
 			<alternativeFunction channel="7" type="DIGITAL_ANALOG_OUTPUT" channelCount="8">
-				<properties/>
+				<properties>
+					<physicalChannelIndexOffset>-1</physicalChannelIndexOffset>
+				</properties>
 				<configParameters>hmw_io_ch_master--7-t7</configParameters>
 				<variables>hmw_digital_output_values--7</variables>
 			</alternativeFunction>
 		</function>
-		<function channel="15" type="DIGITAL_INPUT" channelCount="6">
+		<function channel="15" type="ANALOG_INPUT" channelCount="6">
 			<properties>
 				<physicalChannelIndexOffset>-1</physicalChannelIndexOffset>
 			</properties>
 			<configParameters>hmw_io_ch_master--15-t15</configParameters>
 			<variables>hmw_analog_input_values--15</variables>
 			<alternativeFunction channel="15" type="DIGITAL_INPUT" channelCount="6">
-				<properties/>
+				<properties>
+					<physicalChannelIndexOffset>-1</physicalChannelIndexOffset>
+				</properties>
 				<configParameters>hmw_io_ch_master--15-t15</configParameters>
 				<variables>hmw_digital_input_values--15</variables>
 			</alternativeFunction>
@@ -52,7 +56,9 @@
 			<configParameters>hmw_io_ch_master--21-t21</configParameters>
 			<variables>hmw_analog_input_values--21</variables>
 			<alternativeFunction channel="21" type="DIGITAL_ANALOG_INPUT" channelCount="6">
-				<properties/>
+				<properties>
+					<physicalChannelIndexOffset>-1</physicalChannelIndexOffset>
+				</properties>
 				<configParameters>hmw_io_ch_master--21-t21</configParameters>
 				<variables>hmw_digital_input_values--21</variables>
 			</alternativeFunction>
