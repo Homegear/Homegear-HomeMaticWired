@@ -39,7 +39,7 @@ HMW_LGW::HMW_LGW(std::shared_ptr<BaseLib::Systems::PhysicalInterfaceSettings> se
 
 	signal(SIGPIPE, SIG_IGN);
 
-	_socket = std::unique_ptr<BaseLib::SocketOperations>(new BaseLib::SocketOperations(_bl));
+	_socket = std::unique_ptr<BaseLib::TcpSocket>(new BaseLib::TcpSocket(_bl));
 
 	if(!settings)
 	{
@@ -318,7 +318,7 @@ void HMW_LGW::startListening()
 		stopListening();
 		_searchFinished = true;
 		aesInit();
-		_socket = std::unique_ptr<BaseLib::SocketOperations>(new BaseLib::SocketOperations(_bl, _settings->host, _settings->port, _settings->ssl, _settings->caFile, _settings->verifyCertificate));
+		_socket = std::unique_ptr<BaseLib::TcpSocket>(new BaseLib::TcpSocket(_bl, _settings->host, _settings->port, _settings->ssl, _settings->caFile, _settings->verifyCertificate));
 		_socket->setReadTimeout(1000000);
 		_out.printDebug("Connecting to HMW-LGW with hostname " + _settings->host + " on port " + _settings->port + "...");
 		_stopped = false;

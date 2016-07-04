@@ -86,7 +86,7 @@ class HMW_LGW  : public IHMWiredInterface
         int64_t _lastAction = 0;
         std::string _hostname;
         std::string _port;
-        std::unique_ptr<BaseLib::SocketOperations> _socket;
+        std::unique_ptr<BaseLib::TcpSocket> _socket;
         std::mutex _requestsMutex;
         std::map<uint8_t, std::shared_ptr<Request>> _requests;
         std::mutex _sendMutex;
