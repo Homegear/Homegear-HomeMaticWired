@@ -33,7 +33,7 @@
 namespace HMWired
 {
 
-IHMWiredInterface::IHMWiredInterface(std::shared_ptr<BaseLib::Systems::PhysicalInterfaceSettings> settings) : IPhysicalInterface(GD::bl, settings)
+IHMWiredInterface::IHMWiredInterface(std::shared_ptr<BaseLib::Systems::PhysicalInterfaceSettings> settings) : IPhysicalInterface(GD::bl, GD::family->getFamily(), settings)
 {
 }
 
