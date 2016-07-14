@@ -35,7 +35,7 @@
 namespace HMWired
 {
 
-Interfaces::Interfaces(BaseLib::Obj* bl, std::vector<std::shared_ptr<Systems::PhysicalInterfaceSettings>> physicalInterfaceSettings) : Systems::PhysicalInterfaces(bl, GD::family->getFamily(), physicalInterfaceSettings)
+Interfaces::Interfaces(BaseLib::Obj* bl, std::map<std::string, Systems::PPhysicalInterfaceSettings> physicalInterfaceSettings) : Systems::PhysicalInterfaces(bl, GD::family->getFamily(), physicalInterfaceSettings)
 {
 	create();
 }
@@ -49,18 +49,18 @@ void Interfaces::create()
 	try
 	{
 
-		for(std::vector<std::shared_ptr<Systems::PhysicalInterfaceSettings>>::iterator i = _physicalInterfaceSettings.begin(); i != _physicalInterfaceSettings.end(); ++i)
+		for(std::map<std::string, Systems::PPhysicalInterfaceSettings>::iterator i = _physicalInterfaceSettings.begin(); i != _physicalInterfaceSettings.end(); ++i)
 		{
 			std::shared_ptr<IHMWiredInterface> device;
-			if(!*i) continue;
-			GD::out.printDebug("Debug: Creating physical device. Type defined in homematicwired.conf is: " + (*i)->type);
-			if((*i)->type == "rs485") device.reset(new RS485(*i));
-			else if((*i)->type == "hmwlgw") device.reset(new HMW_LGW(*i));
-			else GD::out.printError("Error: Unsupported physical device type: " + (*i)->type);
+			if(!i->second) continue;
+			GD::out.printDebug("Debug: Creating physical device. Type defined in homematicwired.conf is: " + i->second->type);
+			if(i->second->type == "rs485") device.reset(new RS485(i->second));
+			else if(i->second->type == "hmwlgw") device.reset(new HMW_LGW(i->second));
+			else GD::out.printError("Error: Unsupported physical device type: " + i->second->type);
 			if(device)
 			{
-				if(_physicalInterfaces.find((*i)->id) != _physicalInterfaces.end()) GD::out.printError("Error: id used for two devices: " + (*i)->id);
-				_physicalInterfaces[(*i)->id] = device;
+				if(_physicalInterfaces.find(i->second->id) != _physicalInterfaces.end()) GD::out.printError("Error: id used for two devices: " + i->second->id);
+				_physicalInterfaces[i->second->id] = device;
 				GD::physicalInterface = device;
 			}
 		}
