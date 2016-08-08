@@ -2153,7 +2153,7 @@ PVariable HMWiredCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, uint6
 
 		description->structValue->insert(StructElement("FIRMWARE", PVariable(new Variable(std::string(VERSION)))));
 
-		int32_t uiFlags = (int32_t)RPC::Device::UIFlags::dontdelete | (int32_t)RPC::Device::UIFlags::visible;
+		int32_t uiFlags = (int32_t)Rpc::Device::UIFlags::dontdelete | (int32_t)Rpc::Device::UIFlags::visible;
 		description->structValue->insert(StructElement("FLAGS", PVariable(new Variable(uiFlags))));
 
 		description->structValue->insert(StructElement("INTERFACE", PVariable(new Variable(_serialNumber))));
