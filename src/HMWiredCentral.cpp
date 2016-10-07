@@ -1242,7 +1242,7 @@ std::string HMWiredCentral::handleCliCommand(std::string command)
 					else if(filterType == "type")
 					{
 						int32_t deviceType = BaseLib::Math::getNumber(filterValue, true);
-						if((int32_t)i->second->getDeviceType().type() != deviceType) continue;
+						if((int32_t)i->second->getDeviceType() != deviceType) continue;
 					}
 					else if(filterType == "unreach")
 					{
@@ -1264,7 +1264,7 @@ std::string HMWiredCentral::handleCliCommand(std::string command)
 					stringStream << name << bar
 						<< std::setw(addressWidth) << BaseLib::HelperFunctions::getHexString(i->second->getAddress(), 8) << bar
 						<< std::setw(serialWidth) << i->second->getSerialNumber() << bar
-						<< std::setw(typeWidth1) << BaseLib::HelperFunctions::getHexString(i->second->getDeviceType().type(), 4) << bar;
+						<< std::setw(typeWidth1) << BaseLib::HelperFunctions::getHexString(i->second->getDeviceType(), 4) << bar;
 					if(i->second->getRpcDevice())
 					{
 						PSupportedDevice type = i->second->getRpcDevice()->getType(i->second->getDeviceType(), i->second->getFirmwareVersion());
@@ -1470,7 +1470,7 @@ std::string HMWiredCentral::handleCliCommand(std::string command)
 			if(!_currentPeer) stringStream << "This peer is not paired to this central." << std::endl;
 			else
 			{
-				stringStream << "Peer with id " << std::hex << std::to_string(id) << " and device type 0x" << _bl->hf.getHexString(_currentPeer->getDeviceType().type()) << " selected." << std::dec << std::endl;
+				stringStream << "Peer with id " << std::hex << std::to_string(id) << " and device type 0x" << _bl->hf.getHexString(_currentPeer->getDeviceType()) << " selected." << std::dec << std::endl;
 				stringStream << "For information about the peer's commands type: \"help\"" << std::endl;
 			}
 			return stringStream.str();
@@ -1492,7 +1492,7 @@ std::string HMWiredCentral::handleCliCommand(std::string command)
     return "Error executing command. See log file for more details.\n";
 }
 
-std::shared_ptr<HMWiredPeer> HMWiredCentral::createPeer(int32_t address, int32_t firmwareVersion, BaseLib::Systems::LogicalDeviceType deviceType, std::string serialNumber, bool save)
+std::shared_ptr<HMWiredPeer> HMWiredCentral::createPeer(int32_t address, int32_t firmwareVersion, uint32_t deviceType, std::string serialNumber, bool save)
 {
 	try
 	{
@@ -1562,7 +1562,7 @@ void HMWiredCentral::updateFirmware(uint64_t id)
 		if(!peer) return;
 		_updateMode = true;
 		_updateMutex.lock();
-		std::string filenamePrefix = BaseLib::HelperFunctions::getHexString(1, 4) + "." + BaseLib::HelperFunctions::getHexString(peer->getDeviceType().type(), 8);
+		std::string filenamePrefix = BaseLib::HelperFunctions::getHexString(1, 4) + "." + BaseLib::HelperFunctions::getHexString(peer->getDeviceType(), 8);
 		std::string versionFile(_bl->settings.firmwarePath() + filenamePrefix + ".version");
 		if(!BaseLib::Io::fileExists(versionFile))
 		{
@@ -1827,7 +1827,7 @@ void HMWiredCentral::handleAnnounce(std::shared_ptr<HMWiredPacket> packet)
 		int32_t firmwareVersion = (packet->payload()->at(4) << 8) + packet->payload()->at(5);
 		std::string serialNumber((char*)&packet->payload()->at(6), 10);
 
-		std::shared_ptr<HMWiredPeer> peer = createPeer(packet->senderAddress(), firmwareVersion, BaseLib::Systems::LogicalDeviceType(HMWIRED_FAMILY_ID, deviceType), serialNumber, true);
+		std::shared_ptr<HMWiredPeer> peer = createPeer(packet->senderAddress(), firmwareVersion, deviceType, serialNumber, true);
 		if(!peer)
 		{
 			GD::out.printError("Error: HomeMatic Wired Central: Could not pair device with address 0x" + BaseLib::HelperFunctions::getHexString(packet->senderAddress(), 8) + " (type: 0x" + BaseLib::HelperFunctions::getHexString(deviceType, 4) + ", firmware version: 0x" + BaseLib::HelperFunctions::getHexString(firmwareVersion, 4) + "). No matching XML file was found.");
@@ -2387,7 +2387,7 @@ PVariable HMWiredCentral::searchDevices(BaseLib::PRpcClientInfo clientInfo)
 					GD::out.printError("Error: HomeMatic Wired Central: Could not pair device with address 0x" + BaseLib::HelperFunctions::getHexString(*i, 8) + ". Device type request failed.");
 					continue;
 				}
-				int32_t deviceType = (response->payload()->at(0) << 8) + response->payload()->at(1);
+				uint32_t deviceType = (response->payload()->at(0) << 8) + response->payload()->at(1);
 
 				//Get firmware version:
 				response = getResponse(0x76, *i);
@@ -2407,7 +2407,7 @@ PVariable HMWiredCentral::searchDevices(BaseLib::PRpcClientInfo clientInfo)
 				}
 				std::string serialNumber((char*)&response->payload()->at(0), response->payload()->size());
 
-				std::shared_ptr<HMWiredPeer> peer = createPeer(*i, firmwareVersion, BaseLib::Systems::LogicalDeviceType(HMWIRED_FAMILY_ID, deviceType), serialNumber, true);
+				std::shared_ptr<HMWiredPeer> peer = createPeer(*i, firmwareVersion, deviceType, serialNumber, true);
 				if(!peer)
 				{
 					GD::out.printError("Error: HomeMatic Wired Central: Could not pair device with address 0x" + BaseLib::HelperFunctions::getHexString(*i, 8) + " (type: 0x" + BaseLib::HelperFunctions::getHexString(deviceType, 4) + ", firmware version: 0x" + BaseLib::HelperFunctions::getHexString(firmwareVersion, 4) + "). No matching XML file was found.");
