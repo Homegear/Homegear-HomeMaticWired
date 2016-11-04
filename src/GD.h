@@ -45,7 +45,7 @@ class GD
 public:
 	virtual ~GD();
 
-	static BaseLib::Obj* bl;
+	static BaseLib::SharedObjects* bl;
 	static HMWired* family;
 	static std::shared_ptr<IHMWiredInterface> physicalInterface;
 	static BaseLib::Output out;

@@ -41,6 +41,8 @@ HMWiredPacketManager::HMWiredPacketManager()
 {
 	try
 	{
+		_stopWorkerThread = false;
+		_disposing = false;
 		GD::bl->threadManager.start(_workerThread, true, GD::bl->settings.workerThreadPriority(), GD::bl->settings.workerThreadPolicy(), &HMWiredPacketManager::worker, this);
 	}
 	catch(const std::exception& ex)

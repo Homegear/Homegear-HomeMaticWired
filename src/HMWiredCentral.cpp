@@ -90,6 +90,9 @@ void HMWiredCentral::init()
 		if(GD::physicalInterface) _physicalInterfaceEventhandlers[GD::physicalInterface->getID()] = GD::physicalInterface->addEventHandler((BaseLib::Systems::IPhysicalInterface::IPhysicalInterfaceEventSink*)this);
 
 		_messageCounter[0] = 0; //Broadcast message counter
+		_stopWorkerThread = false;
+		_pairing = false;
+		_updateMode = false;
 
 		_bl->threadManager.start(_workerThread, true, _bl->settings.workerThreadPriority(), _bl->settings.workerThreadPolicy(), &HMWiredCentral::worker, this);
 	}
