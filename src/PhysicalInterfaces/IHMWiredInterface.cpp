@@ -35,6 +35,7 @@ namespace HMWired
 
 IHMWiredInterface::IHMWiredInterface(std::shared_ptr<BaseLib::Systems::PhysicalInterfaceSettings> settings) : IPhysicalInterface(GD::bl, GD::family->getFamily(), settings)
 {
+	_myAddress = 1;
 }
 
 IHMWiredInterface::~IHMWiredInterface()
