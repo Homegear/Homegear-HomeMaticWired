@@ -353,6 +353,8 @@ void HMW_LGW::reconnect()
 		_searchFinished = true;
 		_out.printDebug("Connecting to HMW-LGW with hostname " + _settings->host + " on port " + _settings->port + "...");
 		_socket->open();
+		_hostname = _settings->host;
+		_ipAddress = _socket->getIpAddress();
 		_out.printInfo("Connected to HMW-LGW with hostname " + _settings->host + " on port " + _settings->port + ".");
 		_stopped = false;
 	}

@@ -94,17 +94,17 @@ protected:
 	std::unordered_map<int32_t, uint8_t> _messageCounter;
 	//End
 
-	bool _stopWorkerThread = false;
+	std::atomic_bool _stopWorkerThread;
 	std::thread _workerThread;
 
 	HMWiredPacketManager _receivedPackets;
 	HMWiredPacketManager _sentPackets;
-	bool _pairing = false;
+	std::atomic_bool _pairing;
 
 	std::mutex _peerInitMutex;
 
 	//Updates:
-	bool _updateMode = false;
+	std::atomic_bool _updateMode;
 	std::mutex _updateFirmwareThreadMutex;
 	std::mutex _updateMutex;
 	std::thread _updateFirmwareThread;

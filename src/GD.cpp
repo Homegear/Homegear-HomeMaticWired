@@ -31,7 +31,7 @@
 
 namespace HMWired
 {
-	BaseLib::Obj* GD::bl = nullptr;
+	BaseLib::SharedObjects* GD::bl = nullptr;
 	HMWired* GD::family = nullptr;
 	std::shared_ptr<IHMWiredInterface> GD::physicalInterface;
 	BaseLib::Output GD::out;
