@@ -70,7 +70,7 @@ public:
 
 	virtual bool onPacketReceived(std::string& senderID, std::shared_ptr<BaseLib::Systems::Packet> packet);
 	std::string handleCliCommand(std::string command);
-	uint64_t getPeerIdFromSerial(std::string serialNumber) { std::shared_ptr<HMWiredPeer> peer = getPeer(serialNumber); if(peer) return peer->getID(); else return 0; }
+	uint64_t getPeerIdFromSerial(std::string& serialNumber) { std::shared_ptr<HMWiredPeer> peer = getPeer(serialNumber); if(peer) return peer->getID(); else return 0; }
 	void updateFirmwares(std::vector<uint64_t> ids);
 	void updateFirmware(uint64_t id);
 	void handleAnnounce(std::shared_ptr<HMWiredPacket> packet);
