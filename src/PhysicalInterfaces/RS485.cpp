@@ -221,21 +221,21 @@ void RS485::closeDevice()
     }
 }
 
-void RS485::setup(int32_t userID, int32_t groupID)
+void RS485::setup(int32_t userID, int32_t groupID, bool setPermissions)
 {
 	try
 	{
-		setDevicePermission(userID, groupID);
+		if(setPermissions) setDevicePermission(userID, groupID);
 		if(_settings->gpio.find(1) != _settings->gpio.end())
 		{
 			exportGPIO(1);
-			setGPIOPermission(1, userID, groupID, false);
+			if(setPermissions) setGPIOPermission(1, userID, groupID, false);
 			setGPIODirection(1, GPIODirection::OUT);
 		}
 		if(_settings->gpio.find(2) != _settings->gpio.end())
 		{
 			exportGPIO(2);
-			setGPIOPermission(2, userID, groupID, false);
+			if(setPermissions) setGPIOPermission(2, userID, groupID, false);
 			setGPIODirection(2, GPIODirection::OUT);
 		}
 	}
