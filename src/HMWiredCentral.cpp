@@ -1878,9 +1878,10 @@ bool HMWiredCentral::peerInit(std::shared_ptr<HMWiredPeer> peer)
 
 		int32_t address = peer->getAddress();
 
-		peer->binaryConfig[0].data = readEEPROM(address, 0);
-		peer->saveParameter(peer->binaryConfig[0].databaseID, 0, peer->binaryConfig[0].data);
-		if(peer->binaryConfig[0].data.size() != 0x10)
+		std::vector<uint8_t> parameterData = readEEPROM(address, 0);
+		peer->binaryConfig[0].setBinaryData(parameterData);
+		peer->saveParameter(peer->binaryConfig[0].databaseId, 0, parameterData);
+		if(parameterData.size() != 0x10)
 		{
 			peer->deleteFromDatabase();
 			GD::out.printError("Error: HomeMatic Wired Central: Could not pair device with address 0x" + BaseLib::HelperFunctions::getHexString(address, 8) + ". Could not read master config from EEPROM.");
@@ -1898,7 +1899,8 @@ bool HMWiredCentral::peerInit(std::shared_ptr<HMWiredPeer> peer)
 			}
 		}
 
-		if(!writeEEPROM(address, 0, peer->binaryConfig[0].data))
+		parameterData = peer->binaryConfig[0].getBinaryData();
+		if(!writeEEPROM(address, 0, parameterData))
 		{
 			GD::out.printError("Error: Could not pair device with address 0x" + BaseLib::HelperFunctions::getHexString(address, 8) + ".");
 			peer->deleteFromDatabase();
@@ -1924,9 +1926,10 @@ bool HMWiredCentral::peerInit(std::shared_ptr<HMWiredPeer> peer)
 				{
 					if(peer->binaryConfig.find(configIndex) == peer->binaryConfig.end())
 					{
-						peer->binaryConfig[configIndex].data = readEEPROM(peer->getAddress(), configIndex);
-						peer->saveParameter(peer->binaryConfig[configIndex].databaseID, configIndex, peer->binaryConfig[configIndex].data);
-						if(peer->binaryConfig[configIndex].data.size() != 0x10) GD::out.printError("Error: HomeMatic Wired Central: Error reading config from device with address 0x" + BaseLib::HelperFunctions::getHexString(address, 8) + ". Size is not 16 bytes.");
+						parameterData = readEEPROM(peer->getAddress(), configIndex);
+						peer->binaryConfig[configIndex].setBinaryData(parameterData);
+						peer->saveParameter(peer->binaryConfig[configIndex].databaseId, configIndex, parameterData);
+						if(parameterData.size() != 0x10) GD::out.printError("Error: HomeMatic Wired Central: Error reading config from device with address 0x" + BaseLib::HelperFunctions::getHexString(address, 8) + ". Size is not 16 bytes.");
 					}
 				}
 				configIndex += 0x10;
