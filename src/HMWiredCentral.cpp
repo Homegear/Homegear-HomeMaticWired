@@ -2053,7 +2053,7 @@ PVariable HMWiredCentral::addLink(BaseLib::PRpcClientInfo clientInfo, uint64_t s
             }
         }
 
-        auto receiverPeers = receiver->getLinkPeers(clientInfo, senderChannelIndex, true);
+        auto receiverPeers = receiver->getLinkPeers(clientInfo, receiverChannelIndex, true);
         for(auto& linkedPeer : *receiverPeers->arrayValue)
         {
             if(linkedPeer->arrayValue->at(0)->integerValue64 == sender->getID() && linkedPeer->arrayValue->at(1)->integerValue == senderChannelIndex)
