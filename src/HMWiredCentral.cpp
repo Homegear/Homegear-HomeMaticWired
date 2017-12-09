@@ -1278,7 +1278,8 @@ std::string HMWiredCentral::handleCliCommand(std::string command)
 							typeID.resize(typeWidth2 - 3);
 							typeID += "...";
 						}
-						stringStream << std::setw(typeWidth2) << typeID << bar;
+						else typeID.resize(typeWidth2, ' ');
+						stringStream << typeID << bar;
 					}
 					else stringStream << std::setw(typeWidth2) << " " << bar;
 					if(i->second->getFirmwareVersion() == 0) stringStream << std::setfill(' ') << std::setw(firmwareWidth) << "?" << bar;
@@ -2039,37 +2040,72 @@ PVariable HMWiredCentral::addLink(BaseLib::PRpcClientInfo clientInfo, uint64_t s
 		}
 		if(!validLink) return Variable::createError(-6, "Link not supported.");
 
-		std::shared_ptr<BaseLib::Systems::BasicPeer> senderPeer(new BaseLib::Systems::BasicPeer());
-		senderPeer->isSender = true;
-		senderPeer->id = sender->getID();
-		senderPeer->address = sender->getAddress();
-		senderPeer->channel = senderChannelIndex;
-		senderPeer->physicalIndexOffset = senderFunction->physicalChannelIndexOffset;
-		senderPeer->serialNumber = sender->getSerialNumber();
-		senderPeer->isSender = true;
-		senderPeer->linkDescription = description;
-		senderPeer->linkName = name;
-		senderPeer->configEEPROMAddress = receiver->getFreeEEPROMAddress(receiverChannelIndex, false);
-		if(senderPeer->configEEPROMAddress == -1) return Variable::createError(-32500, "Can't get free eeprom address to store config.");
+        bool senderLinked = false;
+        bool receiverLinked = false;
 
-		std::shared_ptr<BaseLib::Systems::BasicPeer> receiverPeer(new BaseLib::Systems::BasicPeer());
-		receiverPeer->id = receiver->getID();
-		receiverPeer->address = receiver->getAddress();
-		receiverPeer->channel = receiverChannelIndex;
-		receiverPeer->physicalIndexOffset = receiverFunction->physicalChannelIndexOffset;
-		receiverPeer->serialNumber = receiver->getSerialNumber();
-		receiverPeer->linkDescription = description;
-		receiverPeer->linkName = name;
-		receiverPeer->configEEPROMAddress = sender->getFreeEEPROMAddress(senderChannelIndex, true);
-		if(receiverPeer->configEEPROMAddress == -1) return Variable::createError(-32500, "Can't get free eeprom address to store config.");
+		auto senderPeers = sender->getLinkPeers(clientInfo, senderChannelIndex, true);
+        for(auto& linkedPeer : *senderPeers->arrayValue)
+        {
+            if(linkedPeer->arrayValue->at(0)->integerValue64 == receiver->getID() && linkedPeer->arrayValue->at(1)->integerValue == receiverChannelIndex)
+            {
+                senderLinked = true;
+                break;
+            }
+        }
 
-		sender->addPeer(senderChannelIndex, receiverPeer);
-		sender->initializeLinkConfig(senderChannelIndex, receiverPeer);
-		raiseRPCUpdateDevice(sender->getID(), senderChannelIndex, sender->getSerialNumber() + ":" + std::to_string(senderChannelIndex), 1);
+        auto receiverPeers = receiver->getLinkPeers(clientInfo, receiverChannelIndex, true);
+        for(auto& linkedPeer : *receiverPeers->arrayValue)
+        {
+            if(linkedPeer->arrayValue->at(0)->integerValue64 == sender->getID() && linkedPeer->arrayValue->at(1)->integerValue == senderChannelIndex)
+            {
+                receiverLinked = true;
+                break;
+            }
+        }
 
-		receiver->addPeer(receiverChannelIndex, senderPeer);
-		receiver->initializeLinkConfig(receiverChannelIndex, senderPeer);
-		raiseRPCUpdateDevice(receiver->getID(), receiverChannelIndex, receiver->getSerialNumber() + ":" + std::to_string(receiverChannelIndex), 1);
+        std::shared_ptr<BaseLib::Systems::BasicPeer> senderPeer(new BaseLib::Systems::BasicPeer());
+        if(!senderLinked)
+        {
+            senderPeer->isSender = true;
+            senderPeer->id = sender->getID();
+            senderPeer->address = sender->getAddress();
+            senderPeer->channel = senderChannelIndex;
+            senderPeer->physicalIndexOffset = senderFunction->physicalChannelIndexOffset;
+            senderPeer->serialNumber = sender->getSerialNumber();
+            senderPeer->isSender = true;
+            senderPeer->linkDescription = description;
+            senderPeer->linkName = name;
+            senderPeer->configEEPROMAddress = receiver->getFreeEEPROMAddress(receiverChannelIndex, false);
+            if(senderPeer->configEEPROMAddress == -1) return Variable::createError(-32500, "Can't get free eeprom address to store config.");
+        }
+
+        std::shared_ptr<BaseLib::Systems::BasicPeer> receiverPeer(new BaseLib::Systems::BasicPeer());
+        if(!receiverLinked)
+        {
+            receiverPeer->id = receiver->getID();
+            receiverPeer->address = receiver->getAddress();
+            receiverPeer->channel = receiverChannelIndex;
+            receiverPeer->physicalIndexOffset = receiverFunction->physicalChannelIndexOffset;
+            receiverPeer->serialNumber = receiver->getSerialNumber();
+            receiverPeer->linkDescription = description;
+            receiverPeer->linkName = name;
+            receiverPeer->configEEPROMAddress = sender->getFreeEEPROMAddress(senderChannelIndex, true);
+            if(receiverPeer->configEEPROMAddress == -1) return Variable::createError(-32500, "Can't get free eeprom address to store config.");
+        }
+
+        if(!senderLinked)
+        {
+            sender->addPeer(senderChannelIndex, receiverPeer);
+            sender->initializeLinkConfig(senderChannelIndex, receiverPeer);
+            raiseRPCUpdateDevice(sender->getID(), senderChannelIndex, sender->getSerialNumber() + ":" + std::to_string(senderChannelIndex), 1);
+        }
+
+        if(!receiverLinked)
+        {
+            receiver->addPeer(receiverChannelIndex, senderPeer);
+            receiver->initializeLinkConfig(receiverChannelIndex, senderPeer);
+            raiseRPCUpdateDevice(receiver->getID(), receiverChannelIndex, receiver->getSerialNumber() + ":" + std::to_string(receiverChannelIndex), 1);
+        }
 
 		return PVariable(new Variable(VariableType::tVoid));
 	}
