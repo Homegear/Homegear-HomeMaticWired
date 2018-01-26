@@ -109,6 +109,8 @@ public:
 	void getValuesFromPacket(std::shared_ptr<HMWiredPacket> packet, std::vector<FrameValues>& frameValue);
 	void packetReceived(std::shared_ptr<HMWiredPacket> packet);
 
+	std::string printConfig();
+
 	/**
 	 * This method polls a peer to check if it is reachable.
 	 *
