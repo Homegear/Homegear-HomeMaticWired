@@ -91,7 +91,7 @@ void HMWired::createCentral()
     }
 }
 
-PVariable HMWired::getPairingMethods()
+PVariable HMWired::getPairingInfo()
 {
 	try
 	{
