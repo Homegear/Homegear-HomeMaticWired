@@ -2059,7 +2059,7 @@ PVariable HMWiredCentral::addLink(BaseLib::PRpcClientInfo clientInfo, uint64_t s
 		auto senderPeers = sender->getLinkPeers(clientInfo, senderChannelIndex, true);
         for(auto& linkedPeer : *senderPeers->arrayValue)
         {
-            if(linkedPeer->arrayValue->at(0)->integerValue64 == receiver->getID() && linkedPeer->arrayValue->at(1)->integerValue == receiverChannelIndex)
+            if((unsigned)linkedPeer->arrayValue->at(0)->integerValue64 == receiver->getID() && linkedPeer->arrayValue->at(1)->integerValue == receiverChannelIndex)
             {
                 senderLinked = true;
                 break;
@@ -2069,7 +2069,7 @@ PVariable HMWiredCentral::addLink(BaseLib::PRpcClientInfo clientInfo, uint64_t s
         auto receiverPeers = receiver->getLinkPeers(clientInfo, receiverChannelIndex, true);
         for(auto& linkedPeer : *receiverPeers->arrayValue)
         {
-            if(linkedPeer->arrayValue->at(0)->integerValue64 == sender->getID() && linkedPeer->arrayValue->at(1)->integerValue == senderChannelIndex)
+            if((unsigned)linkedPeer->arrayValue->at(0)->integerValue64 == sender->getID() && linkedPeer->arrayValue->at(1)->integerValue == senderChannelIndex)
             {
                 receiverLinked = true;
                 break;
