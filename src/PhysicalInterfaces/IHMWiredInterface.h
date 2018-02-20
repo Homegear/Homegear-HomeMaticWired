@@ -47,7 +47,7 @@ public:
 	 * Search for new devices on the bus.
 	 * @param[out] foundDevices This array will be filled by the method with the found device addresses.
 	 */
-	virtual void search(std::vector<int32_t>& foundDevices) = 0;
+	virtual void search(std::vector<int32_t>& foundDevices) {};
 
 	virtual bool autoResend() { return false; }
 
