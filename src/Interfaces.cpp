@@ -54,7 +54,7 @@ void Interfaces::create()
 			std::shared_ptr<IHMWiredInterface> device;
 			if(!i->second) continue;
 			GD::out.printDebug("Debug: Creating physical device. Type defined in homematicwired.conf is: " + i->second->type);
-			if(i->second->type == "rs485") device.reset(new RS485(i->second));
+			if(i->second->type == "rs485" || i->second->type == "rs485usb") device.reset(new RS485(i->second));
 			else if(i->second->type == "hmwlgw") device.reset(new HMW_LGW(i->second));
 			else GD::out.printError("Error: Unsupported physical device type: " + i->second->type);
 			if(device)
