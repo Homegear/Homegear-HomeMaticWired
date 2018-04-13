@@ -95,10 +95,155 @@ PVariable HMWired::getPairingInfo()
 {
 	try
 	{
-		if(!_central) return PVariable(new Variable(VariableType::tArray));
-		PVariable array(new Variable(VariableType::tArray));
-		array->arrayValue->push_back(PVariable(new Variable(std::string("searchDevices"))));
-		return array;
+		if(!_central) return std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		PVariable info = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+
+		//{{{ General
+		info->structValue->emplace("searchInterfaces", std::make_shared<BaseLib::Variable>(false));
+		//}}}
+
+		//{{{ Pairing methods
+		PVariable pairingMethods = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		pairingMethods->structValue->emplace("searchDevices", std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct));
+        info->structValue->emplace("pairingMethods", pairingMethods);
+		//}}}
+
+		//{{{ interfaces
+		auto interfaces = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+
+		//{{{ HMW-LGW
+		auto interface = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		interface->structValue->emplace("name", std::make_shared<BaseLib::Variable>(std::string("HMW-LGW")));
+		interface->structValue->emplace("ipDevice", std::make_shared<BaseLib::Variable>(true));
+
+		auto field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(0));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.id")));
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("string")));
+		interface->structValue->emplace("id", field);
+
+		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(1));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.hostname")));
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("string")));
+		interface->structValue->emplace("host", field);
+
+		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(2));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.key")));
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("string")));
+		interface->structValue->emplace("lanKey", field);
+
+		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("string")));
+		field->structValue->emplace("const", std::make_shared<BaseLib::Variable>(std::string("1000")));
+		interface->structValue->emplace("port", field);
+
+		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("integer")));
+		field->structValue->emplace("const", std::make_shared<BaseLib::Variable>(8));
+		interface->structValue->emplace("responseDelay", field);
+
+		interfaces->structValue->emplace("hmwlgw", interface);
+		//}}}
+
+		//{{{ USB module
+		interface = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		interface->structValue->emplace("name", std::make_shared<BaseLib::Variable>(std::string("RS485 USB")));
+		interface->structValue->emplace("ipDevice", std::make_shared<BaseLib::Variable>(false));
+
+		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(0));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.id")));
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("string")));
+		interface->structValue->emplace("id", field);
+
+		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(1));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.device")));
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("string")));
+		interface->structValue->emplace("device", field);
+
+		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("boolean")));
+		field->structValue->emplace("const", std::make_shared<BaseLib::Variable>(true));
+		interface->structValue->emplace("oneWay", field);
+
+		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("integer")));
+		field->structValue->emplace("const", std::make_shared<BaseLib::Variable>(20));
+		interface->structValue->emplace("responseDelay", field);
+
+		interfaces->structValue->emplace("rs485usb", interface);
+		//}}}
+
+		//{{{ Serial module
+		interface = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		interface->structValue->emplace("name", std::make_shared<BaseLib::Variable>(std::string("RS485 UART")));
+		interface->structValue->emplace("ipDevice", std::make_shared<BaseLib::Variable>(false));
+
+		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(0));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.id")));
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("string")));
+		interface->structValue->emplace("id", field);
+
+		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(1));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.device")));
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("string")));
+		interface->structValue->emplace("device", field);
+
+		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(2));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.gpio1")));
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("integer")));
+		field->structValue->emplace("default", std::make_shared<BaseLib::Variable>(17));
+		interface->structValue->emplace("gpio1", field);
+
+		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(3));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.enablerxvalue")));
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("boolean")));
+		field->structValue->emplace("default", std::make_shared<BaseLib::Variable>(false));
+		interface->structValue->emplace("enableRxValue", field);
+
+		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(4));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.gpio2")));
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("integer")));
+		field->structValue->emplace("default", std::make_shared<BaseLib::Variable>(18));
+		interface->structValue->emplace("gpio2", field);
+
+		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(5));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.enablerxvalue")));
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("boolean")));
+		field->structValue->emplace("default", std::make_shared<BaseLib::Variable>(true));
+		interface->structValue->emplace("enableTxValue", field);
+
+		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("boolean")));
+		field->structValue->emplace("const", std::make_shared<BaseLib::Variable>(false));
+		interface->structValue->emplace("oneWay", field);
+
+		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("boolean")));
+		field->structValue->emplace("const", std::make_shared<BaseLib::Variable>(true));
+		interface->structValue->emplace("fastSending", field);
+
+		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
+		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("integer")));
+		field->structValue->emplace("const", std::make_shared<BaseLib::Variable>(13));
+		interface->structValue->emplace("responseDelay", field);
+
+		interfaces->structValue->emplace("rs485", interface);
+		//}}}
+
+		info->structValue->emplace("interfaces", interfaces);
+		//}}}
+
+		return info;
 	}
 	catch(const std::exception& ex)
 	{

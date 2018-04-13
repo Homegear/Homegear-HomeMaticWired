@@ -201,7 +201,7 @@ void HMWiredPeer::initializeLinkConfig(int32_t channel, std::shared_ptr<BaseLib:
 		{
 			variables->structValue->insert(StructElement(i->second->id, i->second->logical->getDefaultValue()));
 		}
-		PVariable result = putParamset(nullptr, channel, ParameterGroup::Type::Enum::link, peer->id, peer->channel, variables);
+		PVariable result = putParamset(nullptr, channel, ParameterGroup::Type::Enum::link, peer->id, peer->channel, variables, false);
 		if(result->errorStruct) GD::out.printError("Error: " + result->structValue->at("faultString")->stringValue);
 	}
 	catch(const std::exception& ex)
@@ -2252,7 +2252,7 @@ PVariable HMWiredPeer::getDeviceInfo(BaseLib::PRpcClientInfo clientInfo, std::ma
     return PVariable();
 }
 
-PVariable HMWiredPeer::getParamset(BaseLib::PRpcClientInfo clientInfo, int32_t channel,ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel)
+PVariable HMWiredPeer::getParamset(BaseLib::PRpcClientInfo clientInfo, int32_t channel,ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel, bool checkAcls)
 {
 	try
 	{
@@ -2266,6 +2266,9 @@ PVariable HMWiredPeer::getParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
 		PParameterGroup parameterGroup = getParameterSet(channel, type);
 		if(!parameterGroup) return Variable::createError(-3, "Unknown parameter set");
 
+        auto central = getCentral();
+        if(!central) return Variable::createError(-32500, "Could not get central.");
+
 		PVariable variables(new Variable(VariableType::tStruct));
 		for(Parameters::iterator i = parameterGroup->parameters.begin(); i != parameterGroup->parameters.end(); ++i)
 		{
@@ -2278,6 +2281,7 @@ PVariable HMWiredPeer::getParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
 			PVariable element;
 			if(type == ParameterGroup::Type::Enum::variables)
 			{
+                if(checkAcls && !clientInfo->acls->checkVariableReadAccess(central->getPeer(_peerID), channel, i->first)) continue;
 				if(!i->second->readable) continue;
 				if(valuesCentral.find(channel) == valuesCentral.end()) continue;
 				if(valuesCentral[channel].find(i->second->id) == valuesCentral[channel].end()) continue;
@@ -2324,7 +2328,7 @@ PVariable HMWiredPeer::getParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable HMWiredPeer::getParamsetDescription(BaseLib::PRpcClientInfo clientInfo, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel)
+PVariable HMWiredPeer::getParamsetDescription(BaseLib::PRpcClientInfo clientInfo, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel, bool checkAcls)
 {
 	try
 	{
@@ -2342,7 +2346,7 @@ PVariable HMWiredPeer::getParamsetDescription(BaseLib::PRpcClientInfo clientInfo
 			if(!remotePeer) return Variable::createError(-2, "Unknown remote peer.");
 		}
 
-		return Peer::getParamsetDescription(clientInfo, parameterGroup);
+		return Peer::getParamsetDescription(clientInfo, channel, parameterGroup, checkAcls);
 	}
 	catch(const std::exception& ex)
     {
@@ -2359,7 +2363,7 @@ PVariable HMWiredPeer::getParamsetDescription(BaseLib::PRpcClientInfo clientInfo
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable HMWiredPeer::putParamset(BaseLib::PRpcClientInfo clientInfo, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel, PVariable variables, bool onlyPushing)
+PVariable HMWiredPeer::putParamset(BaseLib::PRpcClientInfo clientInfo, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel, PVariable variables, bool checkAcls, bool onlyPushing)
 {
 	try
 	{
@@ -2373,10 +2377,14 @@ PVariable HMWiredPeer::putParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
 		if(!parameterGroup) return Variable::createError(-3, "Unknown parameter set");
 		if(variables->structValue->empty()) return PVariable(new Variable(VariableType::tVoid));
 
-		_pingThreadMutex.lock();
-		_lastPing = BaseLib::HelperFunctions::getTime(); //No ping now
-		if(_pingThread.joinable()) _pingThread.join();
-		_pingThreadMutex.unlock();
+        auto central = std::dynamic_pointer_cast<HMWiredCentral>(getCentral());
+        if(!central) return Variable::createError(-32500, "Could not get central.");
+
+        {
+            std::lock_guard<std::mutex> pingThreadGuard(_pingThreadMutex);
+            _lastPing = BaseLib::HelperFunctions::getTime(); //No ping now
+            if(_pingThread.joinable()) _pingThread.join();
+        }
 
 		std::map<int32_t, bool> changedBlocks;
 		if(type == ParameterGroup::Type::Enum::config)
@@ -2410,6 +2418,9 @@ PVariable HMWiredPeer::putParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
 			for(Struct::iterator i = variables->structValue->begin(); i != variables->structValue->end(); ++i)
 			{
 				if(i->first.empty() || !i->second) continue;
+
+                if(checkAcls && !clientInfo->acls->checkVariableWriteAccess(central->getPeer(_peerID), channel, i->first)) continue;
+
 				setValue(clientInfo, channel, i->first, i->second, true);
 			}
 		}
@@ -2439,7 +2450,6 @@ PVariable HMWiredPeer::putParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
 
 		if(changedBlocks.empty()) return PVariable(new Variable(VariableType::tVoid));
 
-		std::shared_ptr<HMWiredCentral> central(std::dynamic_pointer_cast<HMWiredCentral>(getCentral()));
 		for(std::map<int32_t, bool>::iterator i = changedBlocks.begin(); i != changedBlocks.end(); ++i)
 		{
 			std::vector<uint8_t> parameterData = binaryConfig[i->first].getBinaryData();
