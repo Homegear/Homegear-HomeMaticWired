@@ -2144,10 +2144,16 @@ PVariable HMWiredCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, std::
 	try
 	{
 		if(serialNumber.empty()) return Variable::createError(-2, "Unknown device.");
-		std::shared_ptr<HMWiredPeer> peer = getPeer(serialNumber);
-		if(!peer) return PVariable(new Variable(VariableType::tVoid));
 
-		return deleteDevice(clientInfo, peer->getID(), flags);
+		uint64_t peerId = 0;
+
+		{
+			std::shared_ptr<HMWiredPeer> peer = getPeer(serialNumber);
+			if(!peer) return PVariable(new Variable(VariableType::tVoid));
+			peerId = peer->getID();
+		}
+
+		return deleteDevice(clientInfo, peerId, flags);
 	}
 	catch(const std::exception& ex)
     {
@@ -2175,6 +2181,7 @@ PVariable HMWiredCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, uint6
 
 		//Reset
 		if(flags & 0x01) peer->reset();
+		peer.reset();
 		deletePeer(id);
 
 		if(peerExists(id)) return Variable::createError(-1, "Error deleting peer. See log for more details.");
