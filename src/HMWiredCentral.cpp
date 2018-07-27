@@ -435,12 +435,9 @@ void HMWiredCentral::deletePeer(uint64_t id)
             if(_peersById.find(id) != _peersById.end()) _peersById.erase(id);
         }
 
-        if(_currentPeer && _currentPeer->getID() == id) _currentPeer.reset();
-
         int32_t i = 0;
         while(peer.use_count() > 1 && i < 600)
         {
-            if(_currentPeer && _currentPeer->getID() == id) _currentPeer.reset();
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             i++;
         }
@@ -998,15 +995,6 @@ std::string HMWiredCentral::handleCliCommand(std::string command)
 	try
 	{
 		std::ostringstream stringStream;
-		if(_currentPeer)
-		{
-			if(command == "unselect" || command == "u")
-			{
-				_currentPeer.reset();
-				return "Peer unselected.\n";
-			}
-			return _currentPeer->handleCliCommand(command);
-		}
 		if(command == "help" || command == "h")
 		{
 			stringStream << "List of commands:" << std::endl << std::endl;
@@ -1088,7 +1076,6 @@ std::string HMWiredCentral::handleCliCommand(std::string command)
 			if(!peerExists(peerID)) stringStream << "This peer is not paired to this central." << std::endl;
 			else
 			{
-				if(_currentPeer && _currentPeer->getID() == peerID) _currentPeer.reset();
 				stringStream << "Unpairing peer " << std::to_string(peerID) << std::endl;
 				deletePeer(peerID);
 			}
@@ -1130,7 +1117,6 @@ std::string HMWiredCentral::handleCliCommand(std::string command)
 			if(!peer) stringStream << "This peer is not paired to this central." << std::endl;
 			else
 			{
-				if(_currentPeer && _currentPeer->getID() == peerID) _currentPeer.reset();
 				stringStream << "Resetting peer " << std::to_string(peerID) << std::endl;
 				peer->reset();
 				deletePeer(peerID);
@@ -1450,47 +1436,6 @@ std::string HMWiredCentral::handleCliCommand(std::string command)
 			if(!result) stringStream << "Unknown error." << std::endl;
 			else if(result->errorStruct) stringStream << result->structValue->at("faultString")->stringValue << std::endl;
 			else stringStream << "Started firmware update(s)... This might take a long time. Use the RPC function \"getUpdateStatus\" or see the log for details." << std::endl;
-			return stringStream.str();
-		}
-		else if(command.compare(0, 12, "peers select") == 0 || command.compare(0, 2, "ps") == 0)
-		{
-			uint64_t id = 0;
-
-			std::stringstream stream(command);
-			std::string element;
-			int32_t offset = (command.at(1) == 's') ? 0 : 1;
-			int32_t index = 0;
-			while(std::getline(stream, element, ' '))
-			{
-				if(index < 1 + offset)
-				{
-					index++;
-					continue;
-				}
-				else if(index == 1 + offset)
-				{
-					if(element == "help") break;
-					id = BaseLib::Math::getNumber(element, false);
-					if(id == 0) return "Invalid id.\n";
-				}
-				index++;
-			}
-			if(index == 1 + offset)
-			{
-				stringStream << "Description: This command selects a peer." << std::endl;
-				stringStream << "Usage: peers select PEERID" << std::endl << std::endl;
-				stringStream << "Parameters:" << std::endl;
-				stringStream << "  PEERID:\tThe id of the peer to select. Example: 513" << std::endl;
-				return stringStream.str();
-			}
-
-			_currentPeer = getPeer(id);
-			if(!_currentPeer) stringStream << "This peer is not paired to this central." << std::endl;
-			else
-			{
-				stringStream << "Peer with id " << std::hex << std::to_string(id) << " and device type 0x" << _bl->hf.getHexString(_currentPeer->getDeviceType()) << " selected." << std::dec << std::endl;
-				stringStream << "For information about the peer's commands type: \"help\"" << std::endl;
-			}
 			return stringStream.str();
 		}
 		else return "Unknown command.\n";
@@ -2144,10 +2089,16 @@ PVariable HMWiredCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, std::
 	try
 	{
 		if(serialNumber.empty()) return Variable::createError(-2, "Unknown device.");
-		std::shared_ptr<HMWiredPeer> peer = getPeer(serialNumber);
-		if(!peer) return PVariable(new Variable(VariableType::tVoid));
 
-		return deleteDevice(clientInfo, peer->getID(), flags);
+		uint64_t peerId = 0;
+
+		{
+			std::shared_ptr<HMWiredPeer> peer = getPeer(serialNumber);
+			if(!peer) return PVariable(new Variable(VariableType::tVoid));
+			peerId = peer->getID();
+		}
+
+		return deleteDevice(clientInfo, peerId, flags);
 	}
 	catch(const std::exception& ex)
     {
@@ -2175,6 +2126,7 @@ PVariable HMWiredCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, uint6
 
 		//Reset
 		if(flags & 0x01) peer->reset();
+		peer.reset();
 		deletePeer(id);
 
 		if(peerExists(id)) return Variable::createError(-1, "Error deleting peer. See log for more details.");
