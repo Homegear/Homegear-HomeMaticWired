@@ -89,14 +89,15 @@ class HMW_LGW  : public IHMWiredInterface
         std::mutex _requestsMutex;
         std::map<uint8_t, std::shared_ptr<Request>> _requests;
         std::mutex _sendMutex;
-        bool _initComplete = false;
+        std::atomic_bool _initComplete;
+        std::atomic_bool _waitingForResponse;
         int32_t _lastKeepAlive = 0;
         int32_t _lastKeepAliveResponse = 0;
         int32_t _lastTimePacket = 0;
         int64_t _startUpTime = 0;
         std::vector<uint8_t> _packetBuffer;
         uint8_t _packetIndex = 0;
-        bool _searchFinished = false;
+        std::atomic_bool _searchFinished;
         std::vector<int32_t> _searchResult;
 
         //AES stuff
