@@ -34,6 +34,10 @@ namespace HMWired
 {
 HMW_LGW::HMW_LGW(std::shared_ptr<BaseLib::Systems::PhysicalInterfaceSettings> settings) : IHMWiredInterface(settings)
 {
+	_initComplete = false;
+	_waitingForResponse = false;
+    _searchFinished = false;
+
 	_out.init(GD::bl);
 	_out.setPrefix(GD::out.getPrefix() + "HMW-LGW \"" + settings->id + "\": ");
 
@@ -83,6 +87,7 @@ void HMW_LGW::search(std::vector<int32_t>& foundDevices)
 		foundDevices.clear();
 		_searchResult.clear();
 		_searchFinished = false;
+        _waitingForResponse = true;
 
 		std::vector<char> startPacket;
 		std::vector<char> payload{ 0x44, 0x00, (char)0xFF };
@@ -111,6 +116,7 @@ void HMW_LGW::search(std::vector<int32_t>& foundDevices)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
     }
+    _waitingForResponse = false;
 }
 
 void HMW_LGW::sendPacket(std::shared_ptr<BaseLib::Systems::Packet> packet)
@@ -214,37 +220,36 @@ void HMW_LGW::getResponse(const std::vector<char>& packet, std::vector<uint8_t>&
 	try
     {
 		if(packet.size() < 8 || _stopped) return;
+		_waitingForResponse = true;
 		std::shared_ptr<Request> request(new Request(responseType));
-		_requestsMutex.lock();
+		std::unique_lock<std::mutex> requestsGuard(_requestsMutex);
 		_requests[messageCounter] = request;
-		_requestsMutex.unlock();
+        requestsGuard.unlock();
 		std::unique_lock<std::mutex> lock(request->mutex);
 		send(packet, false);
-		if(!request->conditionVariable.wait_for(lock, std::chrono::milliseconds(700), [&] { return request->mutexReady; }))
+		if(!request->conditionVariable.wait_for(lock, std::chrono::milliseconds(800), [&] { return request->mutexReady; }))
 		{
 			_out.printError("Error: No response received to packet: " + _bl->hf.getHexString(packet));
 		}
 		response = request->response;
 
-		_requestsMutex.lock();
+        requestsGuard.lock();
 		_requests.erase(messageCounter);
-		_requestsMutex.unlock();
+        requestsGuard.unlock();
 	}
 	catch(const std::exception& ex)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-        _requestsMutex.unlock();
     }
     catch(BaseLib::Exception& ex)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-        _requestsMutex.unlock();
     }
     catch(...)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-        _requestsMutex.unlock();
     }
+    _waitingForResponse = false;
 }
 
 void HMW_LGW::send(std::string hexString, bool raw)
@@ -521,7 +526,7 @@ void HMW_LGW::sendKeepAlivePacket()
 {
 	try
     {
-		if(!_initComplete) return; //Don't send keep alive during search
+		if(!_initComplete || _waitingForResponse) return; //Don't send keep alive during search
 		if(BaseLib::HelperFunctions::getTimeSeconds() - _lastKeepAlive >= 20)
 		{
 			if(!_searchFinished)
@@ -586,10 +591,10 @@ void HMW_LGW::listen()
 				do
 				{
 					sendKeepAlivePacket();
-					receivedBytes = _socket->proofread(&buffer[0], bufferMax);
+					receivedBytes = _socket->proofread(buffer.data(), buffer.size());
 					if(receivedBytes > 0)
 					{
-						data.insert(data.end(), &buffer.at(0), &buffer.at(0) + receivedBytes);
+						data.insert(data.end(), buffer.data(), buffer.data() + receivedBytes);
 						if(data.size() > 1000000)
 						{
 							_out.printError("Could not read from HMW-LGW: Too much data.");
