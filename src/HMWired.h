@@ -41,7 +41,7 @@ class HMWiredCentral;
 class HMWired : public BaseLib::Systems::DeviceFamily
 {
 public:
-	HMWired(BaseLib::SharedObjects* bl, BaseLib::Systems::DeviceFamily::IFamilyEventSink* eventHandler);
+	HMWired(BaseLib::SharedObjects* bl, BaseLib::Systems::IFamilyEventSink* eventHandler);
 	virtual ~HMWired();
 	virtual void dispose();
 
