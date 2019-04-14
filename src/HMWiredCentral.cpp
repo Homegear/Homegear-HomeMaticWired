@@ -377,8 +377,8 @@ bool HMWiredCentral::onPacketReceived(std::string& senderID, std::shared_ptr<Bas
 		if(_disposing) return false;
 		std::shared_ptr<HMWiredPacket> hmWiredPacket(std::dynamic_pointer_cast<HMWiredPacket>(packet));
 		if(!hmWiredPacket) return false;
-		if(GD::bl->debugLevel >= 4) std::cout << BaseLib::HelperFunctions::getTimeString(hmWiredPacket->timeReceived()) << " HomeMatic Wired packet received: " + hmWiredPacket->hexString() << std::endl;
-		_receivedPackets.set(hmWiredPacket->senderAddress(), hmWiredPacket, hmWiredPacket->timeReceived());
+		if(GD::bl->debugLevel >= 4) std::cout << BaseLib::HelperFunctions::getTimeString(hmWiredPacket->getTimeReceived()) << " HomeMatic Wired packet received: " + hmWiredPacket->hexString() << std::endl;
+		_receivedPackets.set(hmWiredPacket->senderAddress(), hmWiredPacket, hmWiredPacket->getTimeReceived());
 		std::shared_ptr<HMWiredPeer> peer(getPeer(hmWiredPacket->senderAddress()));
 		if(peer) peer->packetReceived(hmWiredPacket);
 		else if(hmWiredPacket->messageType() == 0x41 && !_pairing)
@@ -565,7 +565,7 @@ std::shared_ptr<HMWiredPacket> HMWiredCentral::sendPacket(std::shared_ptr<HMWire
 					{
 						std::this_thread::sleep_for(sleepingTime);
 						receivedPacket = systemResponse ? _receivedPackets.get(0) : _receivedPackets.get(packet->destinationAddress());
-						if(receivedPacket && receivedPacket->timeReceived() >= time && receivedPacket->receiverMessageCounter() == packet->senderMessageCounter())
+						if(receivedPacket && receivedPacket->getTimeReceived() >= time && receivedPacket->receiverMessageCounter() == packet->senderMessageCounter())
 						{
 							return receivedPacket;
 						}
@@ -586,7 +586,7 @@ std::shared_ptr<HMWiredPacket> HMWiredCentral::sendPacket(std::shared_ptr<HMWire
 						if(i == 5) sleepingTime = std::chrono::milliseconds(25);
 						std::this_thread::sleep_for(sleepingTime);
 						receivedPacket = systemResponse ? _receivedPackets.get(0) : _receivedPackets.get(packet->destinationAddress());
-						if(receivedPacket && receivedPacket->timeReceived() >= time && receivedPacket->receiverMessageCounter() == packet->senderMessageCounter())
+						if(receivedPacket && receivedPacket->getTimeReceived() >= time && receivedPacket->receiverMessageCounter() == packet->senderMessageCounter())
 						{
 							return receivedPacket;
 						}
@@ -607,7 +607,7 @@ std::shared_ptr<HMWiredPacket> HMWiredCentral::sendPacket(std::shared_ptr<HMWire
 				if(i == 5) sleepingTime = std::chrono::milliseconds(25);
 				std::this_thread::sleep_for(sleepingTime);
 				receivedPacket = systemResponse ? _receivedPackets.get(0) : _receivedPackets.get(packet->destinationAddress());
-				if(receivedPacket && receivedPacket->timeReceived() >= time && receivedPacket->receiverMessageCounter() == packet->senderMessageCounter())
+				if(receivedPacket && receivedPacket->getTimeReceived() >= time && receivedPacket->receiverMessageCounter() == packet->senderMessageCounter())
 				{
 					return receivedPacket;
 				}
@@ -806,7 +806,7 @@ std::vector<uint8_t> HMWiredCentral::readEEPROM(int32_t deviceAddress, int32_t e
 		{
 			sendOK(response->senderMessageCounter(), deviceAddress);
 			if(peer) peer->ignorePackets = false;
-			return *response->payload();
+			return response->payload();
 		}
 	}
 	catch(const std::exception& ex)
@@ -1684,8 +1684,8 @@ void HMWiredCentral::updateFirmware(uint64_t id)
 		packet.reset(new HMWiredPacket(HMWiredPacketType::iMessage, 0, peer->getAddress(), false, getMessageCounter(peer->getAddress()), 0, 0, payload));
 		response = getResponse(packet, true);
 		int32_t packetSize = 0;
-		if(response && response->payload()->size() == 2) packetSize = (response->payload()->at(0) << 8) + response->payload()->at(1);
-		if(!response || response->type() != HMWiredPacketType::system || response->payload()->size() != 2 || packetSize > 128 || packetSize == 0)
+		if(response && response->payload().size() == 2) packetSize = (response->payload().at(0) << 8) + response->payload().at(1);
+		if(!response || response->type() != HMWiredPacketType::system || response->payload().size() != 2 || packetSize > 128 || packetSize == 0)
 		{
 			unlockBus();
 			_bl->deviceUpdateInfo.results[id].first = 8;
@@ -1710,7 +1710,7 @@ void HMWiredCentral::updateFirmware(uint64_t id)
 
 			std::shared_ptr<HMWiredPacket> packet(new HMWiredPacket(HMWiredPacketType::iMessage, 0, peer->getAddress(), false, getMessageCounter(peer->getAddress()), 0, 0, data));
 			response = getResponse(packet, true);
-			if(!response || response->type() != HMWiredPacketType::system || response->payload()->size() != 2)
+			if(!response || response->type() != HMWiredPacketType::system || response->payload().size() != 2)
 			{
 				unlockBus();
 				_bl->deviceUpdateInfo.results[id].first = 8;
@@ -1720,7 +1720,7 @@ void HMWiredCentral::updateFirmware(uint64_t id)
 				_updateMode = false;
 				return;
 			}
-			int32_t receivedBytes = (response->payload()->at(0) << 8) + response->payload()->at(1);
+			int32_t receivedBytes = (response->payload().at(0) << 8) + response->payload().at(1);
 			if(receivedBytes != currentPacketSize)
 			{
 				unlockBus();
@@ -1782,15 +1782,15 @@ void HMWiredCentral::handleAnnounce(std::shared_ptr<HMWiredPacket> packet)
 			return;
 		}
 		GD::out.printInfo("Info: New device detected on bus.");
-		if(packet->payload()->size() != 16)
+		if(packet->payload().size() != 16)
 		{
 			GD::out.printWarning("Warning: Could not interpret announce packet: Packet has unknown size (payload size has to be 16).");
 			_peerInitMutex.unlock();
 			return;
 		}
-		int32_t deviceType = (packet->payload()->at(2) << 8) + packet->payload()->at(3);
-		int32_t firmwareVersion = (packet->payload()->at(4) << 8) + packet->payload()->at(5);
-		std::string serialNumber((char*)&packet->payload()->at(6), 10);
+		int32_t deviceType = (packet->payload().at(2) << 8) + packet->payload().at(3);
+		int32_t firmwareVersion = (packet->payload().at(4) << 8) + packet->payload().at(5);
+		std::string serialNumber((char*)&packet->payload().at(6), 10);
 
 		std::shared_ptr<HMWiredPeer> peer = createPeer(packet->senderAddress(), firmwareVersion, deviceType, serialNumber, true);
 		if(!peer)
@@ -1873,7 +1873,7 @@ bool HMWiredCentral::peerInit(std::shared_ptr<HMWiredPeer> peer)
 		//Read all config
 		std::vector<uint8_t> command({0x45, 0, 0, 0x10, 0x40}); //Request used EEPROM blocks; start address 0x0000, block size 0x10, blocks 0x40
 		std::shared_ptr<HMWiredPacket> response = getResponse(command, address);
-		if(!response || response->payload()->empty() || response->payload()->size() != 12 || response->payload()->at(0) != 0x65 || response->payload()->at(1) != 0 || response->payload()->at(2) != 0 || response->payload()->at(3) != 0x10)
+		if(!response || response->payload().empty() || response->payload().size() != 12 || response->payload().at(0) != 0x65 || response->payload().at(1) != 0 || response->payload().at(2) != 0 || response->payload().at(3) != 0x10)
 		{
 			GD::out.printError("Error: HomeMatic Wired Central: Could not pair device with address 0x" + BaseLib::HelperFunctions::getHexString(address, 8) + ". Could not determine EEPROM blocks to read.");
 			peer->deleteFromDatabase();
@@ -1885,7 +1885,7 @@ bool HMWiredCentral::peerInit(std::shared_ptr<HMWiredPeer> peer)
 		{
 			for(int32_t k = 0; k < 8; k++)
 			{
-				if(response->payload()->at(j + 4) & (1 << k))
+				if(response->payload().at(j + 4) & (1 << k))
 				{
 					if(peer->binaryConfig.find(configIndex) == peer->binaryConfig.end())
 					{
@@ -2289,30 +2289,30 @@ PVariable HMWiredCentral::searchDevices(BaseLib::PRpcClientInfo clientInfo)
 
 				//Get device type:
 				std::shared_ptr<HMWiredPacket> response = getResponse(0x68, *i, true);
-				if(!response || response->payload()->size() != 2)
+				if(!response || response->payload().size() != 2)
 				{
 					GD::out.printError("Error: HomeMatic Wired Central: Could not pair device with address 0x" + BaseLib::HelperFunctions::getHexString(*i, 8) + ". Device type request failed.");
 					continue;
 				}
-				uint32_t deviceType = (response->payload()->at(0) << 8) + response->payload()->at(1);
+				uint32_t deviceType = (response->payload().at(0) << 8) + response->payload().at(1);
 
 				//Get firmware version:
 				response = getResponse(0x76, *i);
-				if(!response || response->payload()->size() != 2)
+				if(!response || response->payload().size() != 2)
 				{
 					GD::out.printError("Error: HomeMatic Wired Central: Could not pair device with address 0x" + BaseLib::HelperFunctions::getHexString(*i, 8) + ". Firmware version request failed.");
 					continue;
 				}
-				int32_t firmwareVersion = (response->payload()->at(0) << 8) + response->payload()->at(1);
+				int32_t firmwareVersion = (response->payload().at(0) << 8) + response->payload().at(1);
 
 				//Get serial number:
 				response = getResponse(0x6E, *i);
-				if(!response || response->payload()->empty())
+				if(!response || response->payload().empty())
 				{
 					GD::out.printError("Error: HomeMatic Wired Central: Could not pair device with address 0x" + BaseLib::HelperFunctions::getHexString(*i, 8) + ". Serial number request failed.");
 					continue;
 				}
-				std::string serialNumber((char*)&response->payload()->at(0), response->payload()->size());
+				std::string serialNumber((char*)&response->payload().at(0), response->payload().size());
 
 				std::shared_ptr<HMWiredPeer> peer = createPeer(*i, firmwareVersion, deviceType, serialNumber, true);
 				if(!peer)

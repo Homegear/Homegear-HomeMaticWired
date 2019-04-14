@@ -53,51 +53,62 @@ private:
 
 class HMWiredPacket : public BaseLib::Systems::Packet
 {
-    public:
-        //Properties
-        HMWiredPacket();
-        HMWiredPacket(std::string packet, int64_t timeReceived = 0);
-        HMWiredPacket(std::vector<uint8_t>& packet, int64_t timeReceived = 0, bool removeEscapes = false);
-        HMWiredPacket(std::vector<uint8_t>& packet, bool gatewayPacket, int64_t timeReceived = 0, int32_t senderAddress = 0, int32_t destinationAddress = 0);
-        HMWiredPacket(HMWiredPacketType type, int32_t senderAddress, int32_t destinationAddress, bool synchronizationBit, uint8_t senderMessageCounter, uint8_t receiverMessageCounter, uint8_t addressMask, std::vector<uint8_t>& payload);
-        virtual ~HMWiredPacket();
+public:
+    //Properties
+    HMWiredPacket();
+    HMWiredPacket(std::string packet, int64_t timeReceived = 0);
+    HMWiredPacket(std::vector<uint8_t>& packet, int64_t timeReceived = 0, bool removeEscapes = false);
+    HMWiredPacket(std::vector<uint8_t>& packet, bool gatewayPacket, int64_t timeReceived = 0, int32_t senderAddress = 0, int32_t destinationAddress = 0);
+    HMWiredPacket(HMWiredPacketType type, int32_t senderAddress, int32_t destinationAddress, bool synchronizationBit, uint8_t senderMessageCounter, uint8_t receiverMessageCounter, uint8_t addressMask, std::vector<uint8_t>& payload);
+    virtual ~HMWiredPacket();
 
-        HMWiredPacketType type() { return _type; }
-        uint8_t messageType() { if(_payload.empty()) return 0; else return _payload.at(0); }
-        uint16_t checksum() { return _checksum; }
-        uint8_t addressMask() { return _addressMask; }
-        uint8_t senderMessageCounter() { return _senderMessageCounter; }
-        uint8_t receiverMessageCounter() { return _receiverMessageCounter; }
-        bool synchronizationBit() { return _synchronizationBit; }
-        virtual std::string hexString();
-        virtual std::vector<uint8_t> byteArray();
-        virtual std::vector<char> byteArraySigned();
-        virtual std::vector<char> byteArrayLgw();
+    uint8_t length() { return _length; }
+    int32_t senderAddress() { return _senderAddress; }
+    int32_t destinationAddress() { return _destinationAddress; }
+    uint8_t controlByte() { return _controlByte; }
+    HMWiredPacketType type() { return _type; }
+    uint8_t messageType() { if(_payload.empty()) return 0; else return _payload.at(0); }
+    uint16_t checksum() { return _checksum; }
+    uint8_t addressMask() { return _addressMask; }
+    uint8_t senderMessageCounter() { return _senderMessageCounter; }
+    uint8_t receiverMessageCounter() { return _receiverMessageCounter; }
+    bool synchronizationBit() { return _synchronizationBit; }
+    std::string hexString();
+    std::vector<uint8_t> byteArray();
+    std::vector<uint8_t>& payload() { return _payload; }
+    std::vector<char> byteArraySigned();
+    std::vector<char> byteArrayLgw();
 
-        void import(std::vector<uint8_t>& packet, bool removeEscapes = false);
-        void import(std::string packetHex);
-        virtual std::vector<uint8_t> getPosition(double index, double size, int32_t mask);
-        virtual void setPosition(double index, double size, std::vector<uint8_t>& value);
-    protected:
-    private:
-        //Packet content
-        std::vector<uint8_t> _packet;
-        std::vector<uint8_t> _escapedPacket;
-        HMWiredPacketType _type = HMWiredPacketType::none;
-        uint16_t _checksum = 0;
-        uint8_t _addressMask = 0;
-        uint8_t _senderMessageCounter = 0;
-        uint8_t _receiverMessageCounter = 0;
-        bool _synchronizationBit = false;
-        //End packet content
+    void import(std::vector<uint8_t>& packet, bool removeEscapes = false);
+    void import(std::string packetHex);
+    std::vector<uint8_t> getPosition(double index, double size, int32_t mask);
+    void setPosition(double index, double size, std::vector<uint8_t>& value);
+private:
+    static constexpr std::array<uint8_t, 9> _bitmask{0xFF, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF};
 
-        void init();
-        void reset();
-        void escapePacket();
-        void escapePacket(std::vector<uint8_t>& result, const std::vector<uint8_t>& packet);
-        void escapePacket(std::vector<char>& result, const std::vector<char>& packet);
-        std::vector<uint8_t> unescapePacket(std::vector<uint8_t>& packet);
-        void generateControlByte();
+    //Packet content
+    uint8_t _length = 0;
+    int32_t _senderAddress = 0;
+    int32_t _destinationAddress = 0;
+    uint8_t _controlByte = 0;
+    std::vector<uint8_t> _packet;
+    std::vector<uint8_t> _escapedPacket;
+    std::vector<uint8_t> _payload;
+    HMWiredPacketType _type = HMWiredPacketType::none;
+    uint16_t _checksum = 0;
+    uint8_t _addressMask = 0;
+    uint8_t _senderMessageCounter = 0;
+    uint8_t _receiverMessageCounter = 0;
+    bool _synchronizationBit = false;
+    //End packet content
+
+    void init();
+    void reset();
+    void escapePacket();
+    void escapePacket(std::vector<uint8_t>& result, const std::vector<uint8_t>& packet);
+    void escapePacket(std::vector<char>& result, const std::vector<char>& packet);
+    std::vector<uint8_t> unescapePacket(std::vector<uint8_t>& packet);
+    void generateControlByte();
 };
 
 } /* namespace HMWired */
