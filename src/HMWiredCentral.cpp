@@ -30,6 +30,8 @@
 #include "HMWiredCentral.h"
 #include "GD.h"
 
+#include <iomanip>
+
 namespace HMWired {
 
 HMWiredCentral::HMWiredCentral(ICentralEventSink* eventHandler) : BaseLib::Systems::ICentral(HMWIRED_FAMILY_ID, GD::bl, eventHandler)

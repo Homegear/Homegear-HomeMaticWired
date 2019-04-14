@@ -32,6 +32,8 @@
 #include "HMWiredCentral.h"
 #include "GD.h"
 
+#include <iomanip>
+
 namespace HMWired
 {
 

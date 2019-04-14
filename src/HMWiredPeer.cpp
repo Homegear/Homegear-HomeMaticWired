@@ -31,6 +31,8 @@
 #include "HMWiredCentral.h"
 #include "GD.h"
 
+#include <iomanip>
+
 namespace HMWired
 {
 std::shared_ptr<BaseLib::Systems::ICentral> HMWiredPeer::getCentral()

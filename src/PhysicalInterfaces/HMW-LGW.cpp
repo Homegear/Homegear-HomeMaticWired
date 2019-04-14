@@ -689,7 +689,7 @@ bool HMW_LGW::aesKeyExchange(std::vector<uint8_t>& data)
 		}
 		if(data.at(startPos - 4) == 'V' && data.at(startPos - 1) == ',')
 		{
-			uint8_t packetIndex = (_math.getNumber(data.at(startPos - 3)) << 4) + _math.getNumber(data.at(startPos - 2));
+			uint8_t packetIndex = (BaseLib::Math::getNumber(data.at(startPos - 3)) << 4) + BaseLib::Math::getNumber(data.at(startPos - 2));
 			packetIndex++;
 			if(length != 32)
 			{
