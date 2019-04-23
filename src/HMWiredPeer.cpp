@@ -1481,7 +1481,7 @@ bool HMWiredPeer::load(BaseLib::Systems::ICentral* central)
 			return false;
 		}
 
-		if(_rpcDevice->memorySize == -1) _rpcDevice->memorySize = 1024;
+		if(_rpcDevice->memorySize == 0) _rpcDevice->memorySize = 1024;
 
 		initializeTypeString();
 		std::string entry;
