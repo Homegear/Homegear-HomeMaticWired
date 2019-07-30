@@ -31,6 +31,8 @@
 #include "HMWiredCentral.h"
 #include "GD.h"
 
+#include <iomanip>
+
 namespace HMWired
 {
 std::shared_ptr<BaseLib::Systems::ICentral> HMWiredPeer::getCentral()
@@ -1478,6 +1480,9 @@ bool HMWiredPeer::load(BaseLib::Systems::ICentral* central)
 			GD::out.printError("Error loading HomeMatic Wired peer " + std::to_string(_peerID) + ": Device type not found: 0x" + BaseLib::HelperFunctions::getHexString((uint32_t)_deviceType) + " Firmware version: " + std::to_string(_firmwareVersion));
 			return false;
 		}
+
+		if(_rpcDevice->memorySize == 0) _rpcDevice->memorySize = 1024;
+
 		initializeTypeString();
 		std::string entry;
 		loadConfig();
@@ -1879,11 +1884,11 @@ void HMWiredPeer::getValuesFromPacket(std::shared_ptr<HMWiredPacket> packet, std
 			if(!frame) continue;
 			if(frame->direction == Packet::Direction::Enum::toCentral && packet->senderAddress() != _address) continue;
 			if(frame->direction == Packet::Direction::Enum::fromCentral && packet->destinationAddress() != _address) continue;
-			if(packet->payload()->empty()) continue;
-			if(frame->subtype > -1 && frame->subtypeIndex >= 9 && (signed)packet->payload()->size() > (frame->subtypeIndex - 9) && packet->payload()->at(frame->subtypeIndex - 9) != (unsigned)frame->subtype) continue;
+			if(packet->payload().empty()) continue;
+			if(frame->subtype > -1 && frame->subtypeIndex >= 9 && (signed)packet->payload().size() > (frame->subtypeIndex - 9) && packet->payload().at(frame->subtypeIndex - 9) != (unsigned)frame->subtype) continue;
 			int32_t channelIndex = frame->channelIndex;
 			int32_t channel = -1;
-			if(channelIndex >= 9 && (signed)packet->payload()->size() > (channelIndex - 9)) channel = packet->payload()->at(channelIndex - 9) - frame->channelIndexOffset;
+			if(channelIndex >= 9 && (signed)packet->payload().size() > (channelIndex - 9)) channel = packet->payload().at(channelIndex - 9) - frame->channelIndexOffset;
 			if(channel > -1 && frame->channelSize < 1.0) channel &= (0xFF >> (8 - std::lround(frame->channelSize * 10) % 10));
 			if(frame->channel > -1) channel = frame->channel;
 			currentFrameValues.frameID = frame->id;
@@ -1893,7 +1898,7 @@ void HMWiredPeer::getValuesFromPacket(std::shared_ptr<HMWiredPacket> packet, std
 				std::vector<uint8_t> data;
 				if((*j)->size > 0 && (*j)->index > 0)
 				{
-					if(((int32_t)(*j)->index) - 9 >= (signed)packet->payload()->size()) continue;
+					if(((int32_t)(*j)->index) - 9 >= (signed)packet->payload().size()) continue;
 					data = packet->getPosition((*j)->index, (*j)->size, -1);
 
 					if((*j)->constValueInteger > -1)
@@ -2198,7 +2203,7 @@ void HMWiredPeer::packetReceived(std::shared_ptr<HMWiredPacket> packet)
 		}
 		if(packet->type() == HMWiredPacketType::iMessage && packet->destinationAddress() == central->getAddress())
 		{
-			if(packet->timeReceived() != 0 && BaseLib::HelperFunctions::getTime() - packet->timeReceived() < 150) central->sendOK(packet->senderMessageCounter(), packet->senderAddress());
+			if(packet->getTimeReceived() != 0 && BaseLib::HelperFunctions::getTime() - packet->getTimeReceived() < 150) central->sendOK(packet->senderMessageCounter(), packet->senderAddress());
 		}
 		if(!rpcValues.empty())
 		{

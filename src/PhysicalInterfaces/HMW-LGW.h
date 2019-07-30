@@ -82,7 +82,6 @@ class HMW_LGW  : public IHMWiredInterface
         	uint8_t _responseType;
         };
 
-        BaseLib::Math _math;
         int64_t _lastAction = 0;
         std::string _port;
         std::unique_ptr<BaseLib::TcpSocket> _socket;

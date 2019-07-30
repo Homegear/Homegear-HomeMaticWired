@@ -130,14 +130,15 @@ void HMW_LGW::sendPacket(std::shared_ptr<BaseLib::Systems::Packet> packet)
 		}
 		_lastAction = BaseLib::HelperFunctions::getTime();
 
+        std::shared_ptr<HMWiredPacket> hmwiredPacket(std::dynamic_pointer_cast<HMWiredPacket>(packet));
+        if(!hmwiredPacket) return;
+
 		if(!_initComplete)
     	{
-    		_out.printWarning("Warning: !!!Not!!! sending (Port " + _settings->port + "), because the init sequence is not completed: " + packet->hexString());
+    		_out.printWarning("Warning: !!!Not!!! sending (Port " + _settings->port + "), because the init sequence is not completed: " + hmwiredPacket->hexString());
     		return;
     	}
 
-		std::shared_ptr<HMWiredPacket> hmwiredPacket(std::dynamic_pointer_cast<HMWiredPacket>(packet));
-		if(!hmwiredPacket) return;
 		if(hmwiredPacket->type() == HMWiredPacketType::ackMessage) return; //Ignore ACK packets as they're sent automatically
 
 		std::vector<char> packetBytes = hmwiredPacket->byteArrayLgw();
@@ -613,14 +614,14 @@ void HMW_LGW::listen()
 			catch(const BaseLib::SocketClosedException& ex)
 			{
 				_stopped = true;
-				_out.printWarning("Warning: " + ex.what());
+				_out.printWarning("Warning: " + std::string(ex.what()));
 				std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 				continue;
 			}
 			catch(const BaseLib::SocketOperationException& ex)
 			{
 				_stopped = true;
-				_out.printError("Error: " + ex.what());
+				_out.printError("Error: " + std::string(ex.what()));
 				std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 				continue;
 			}
@@ -689,7 +690,7 @@ bool HMW_LGW::aesKeyExchange(std::vector<uint8_t>& data)
 		}
 		if(data.at(startPos - 4) == 'V' && data.at(startPos - 1) == ',')
 		{
-			uint8_t packetIndex = (_math.getNumber(data.at(startPos - 3)) << 4) + _math.getNumber(data.at(startPos - 2));
+			uint8_t packetIndex = (BaseLib::Math::getNumber(data.at(startPos - 3)) << 4) + BaseLib::Math::getNumber(data.at(startPos - 2));
 			packetIndex++;
 			if(length != 32)
 			{

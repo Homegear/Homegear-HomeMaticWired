@@ -81,14 +81,16 @@ void RS485::sendPacket(std::shared_ptr<BaseLib::Systems::Packet> packet)
 		}
 		if(_fileDescriptor->descriptor == -1) throw(BaseLib::Exception("Couldn't write to RS485 serial device, because the file descriptor is not valid: " + _settings->device));
 		_lastAction = BaseLib::HelperFunctions::getTime();
-		if(packet->payload()->size() > 132)
+
+        std::shared_ptr<HMWiredPacket> hmWiredPacket(std::dynamic_pointer_cast<HMWiredPacket>(packet));
+        if(!hmWiredPacket) return;
+
+		if(hmWiredPacket->payload().size() > 132)
 		{
 			if(_bl->debugLevel >= 2) _out.printError("Tried to send packet with payload larger than 128 bytes. That is not supported.");
 			return;
 		}
 
-		std::shared_ptr<HMWiredPacket> hmWiredPacket(std::dynamic_pointer_cast<HMWiredPacket>(packet));
-		if(!hmWiredPacket) return;
 		std::vector<uint8_t> data = hmWiredPacket->byteArray();
 		writeToDevice(data, true);
 	}
