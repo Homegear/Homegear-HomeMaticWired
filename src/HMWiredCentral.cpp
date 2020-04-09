@@ -1921,9 +1921,12 @@ PVariable HMWiredCentral::addLink(BaseLib::PRpcClientInfo clientInfo, uint64_t s
 
         if(!receiverLinked)
         {
-            receiver->addPeer(receiverChannelIndex, senderPeer);
-            receiver->initializeLinkConfig(receiverChannelIndex, senderPeer);
-            raiseRPCUpdateDevice(receiver->getID(), receiverChannelIndex, receiver->getSerialNumber() + ":" + std::to_string(receiverChannelIndex), 1);
+            if(sender->getID() != receiver->getID()) //Don't add link twice when sender and receiver are the same
+            {
+                receiver->addPeer(receiverChannelIndex, senderPeer);
+                receiver->initializeLinkConfig(receiverChannelIndex, senderPeer);
+                raiseRPCUpdateDevice(receiver->getID(), receiverChannelIndex, receiver->getSerialNumber() + ":" + std::to_string(receiverChannelIndex), 1);
+            }
         }
 
 		return PVariable(new Variable(VariableType::tVoid));
