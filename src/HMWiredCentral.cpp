@@ -932,7 +932,7 @@ std::string HMWiredCentral::handleCliCommand(std::string command)
 				index++;
 			}
 
-			PVariable result = searchDevices(nullptr);
+			PVariable result = searchDevices(nullptr, "");
 			if(result->errorStruct) stringStream << "Error: " << result->structValue->at("faultString")->stringValue << std::endl;
 			else stringStream << "Search completed successfully." << std::endl;
 			return stringStream.str();
@@ -2102,7 +2102,7 @@ PVariable HMWiredCentral::removeLink(BaseLib::PRpcClientInfo clientInfo, uint64_
 	return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable HMWiredCentral::searchDevices(BaseLib::PRpcClientInfo clientInfo)
+PVariable HMWiredCentral::searchDevices(BaseLib::PRpcClientInfo clientInfo, const std::string& interfaceId)
 {
 	try
 	{
