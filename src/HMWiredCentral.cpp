@@ -1726,7 +1726,7 @@ bool HMWiredCentral::peerInit(std::shared_ptr<HMWiredPeer> peer)
 			if(j->second->logical->setToValueOnPairingExists)
 			{
 				std::vector<uint8_t> enforceValue;
-				j->second->convertToPacket(j->second->logical->getSetToValueOnPairing(), enforceValue);
+				j->second->convertToPacket(j->second->logical->getSetToValueOnPairing(), false, enforceValue);
 				peer->setConfigParameter(j->second->physical->memoryIndex, j->second->physical->size, enforceValue);
 			}
 		}
