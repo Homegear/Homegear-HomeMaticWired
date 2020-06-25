@@ -60,10 +60,6 @@ RS485::~RS485()
     {
     	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -79,7 +75,11 @@ void RS485::sendPacket(std::shared_ptr<BaseLib::Systems::Packet> packet)
 			_out.printWarning("Warning: Packet was nullptr.");
 			return;
 		}
-		if(_fileDescriptor->descriptor == -1) throw(BaseLib::Exception("Couldn't write to RS485 serial device, because the file descriptor is not valid: " + _settings->device));
+		if(_fileDescriptor->descriptor == -1)
+        {
+            _out.printError("Error: Couldn't write to RS485 serial device, because the file descriptor is not valid: " + _settings->device);
+            return;
+        }
 		_lastAction = BaseLib::HelperFunctions::getTime();
 
         std::shared_ptr<HMWiredPacket> hmWiredPacket(std::dynamic_pointer_cast<HMWiredPacket>(packet));
@@ -87,7 +87,7 @@ void RS485::sendPacket(std::shared_ptr<BaseLib::Systems::Packet> packet)
 
 		if(hmWiredPacket->payload().size() > 132)
 		{
-			if(_bl->debugLevel >= 2) _out.printError("Tried to send packet with payload larger than 128 bytes. That is not supported.");
+			if(_bl->debugLevel >= 2) _out.printError("Error: Tried to send packet with payload larger than 128 bytes. That is not supported.");
 			return;
 		}
 
@@ -95,10 +95,6 @@ void RS485::sendPacket(std::shared_ptr<BaseLib::Systems::Packet> packet)
 		writeToDevice(data, true);
 	}
 	catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -117,21 +113,21 @@ void RS485::sendPacket(std::vector<uint8_t>& rawPacket)
 			_out.printWarning("Warning: Packet is empty.");
 			return;
 		}
-		if(_fileDescriptor->descriptor == -1) throw(BaseLib::Exception("Couldn't write to RS485 serial device, because the file descriptor is not valid: " + _settings->device));
+		if(_fileDescriptor->descriptor == -1)
+        {
+		    _out.printError("Error: Couldn't write to RS485 serial device, because the file descriptor is not valid: " + _settings->device);
+		    return;
+        }
 		_lastAction = BaseLib::HelperFunctions::getTime();
 		if(rawPacket.size() > 132)
 		{
-			if(_bl->debugLevel >= 2) _out.printError("Tried to send packet with payload larger than 128 bytes. That is not supported.");
+			if(_bl->debugLevel >= 2) _out.printError("Error: Tried to send packet with payload larger than 128 bytes. That is not supported.");
 			return;
 		}
 
 		writeToDevice(rawPacket, true);
 	}
 	catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -192,10 +188,6 @@ void RS485::openDevice()
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -210,10 +202,6 @@ void RS485::closeDevice()
 		unlink(_lockfile.c_str());
 	}
     catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -245,10 +233,6 @@ void RS485::setup(int32_t userID, int32_t groupID, bool setPermissions)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -269,23 +253,28 @@ void RS485::setupDevice()
 		_termios.c_cc[VTIME] = 0;
 		cfsetispeed(&_termios, B19200);
 		cfsetospeed(&_termios, B19200);
-		if(tcflush(_fileDescriptor->descriptor, TCIFLUSH) == -1) throw(BaseLib::Exception("Couldn't flush RS485 serial device " + _settings->device));
-		if(tcsetattr(_fileDescriptor->descriptor, TCSANOW, &_termios) == -1) throw(BaseLib::Exception("Couldn't set RS485 serial device settings: " + _settings->device));
+		if(tcflush(_fileDescriptor->descriptor, TCIFLUSH) == -1)
+        {
+		    _out.printError("Error: Couldn't flush RS485 serial device " + _settings->device);
+		    return;
+        }
+		if(tcsetattr(_fileDescriptor->descriptor, TCSANOW, &_termios) == -1)
+        {
+            _out.printError("Error: Couldn't set RS485 serial device settings: " + _settings->device);
+            return;
+        }
 
 		int flags = fcntl(_fileDescriptor->descriptor, F_GETFL);
 		if(!(flags & O_NONBLOCK))
 		{
 			if(fcntl(_fileDescriptor->descriptor, F_SETFL, flags | O_NONBLOCK) == -1)
 			{
-				throw(BaseLib::Exception("Couldn't set RS485 serial device to non blocking mode: " + _settings->device));
+				_out.printError("Error: Couldn't set RS485 serial device to non blocking mode: " + _settings->device);
+				return;
 			}
 		}
 	}
 	catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -565,30 +554,18 @@ void RS485::writeToDevice(std::vector<uint8_t>& packet, bool printPacket)
     try
     {
     	if(_stopped || packet.empty()) return;
-        if(_fileDescriptor->descriptor == -1) throw(BaseLib::Exception("Couldn't write to RS485 serial device, because the file descriptor is not valid: " + _settings->device));
-        _sendMutex.lock();
+        if(_fileDescriptor->descriptor == -1)
+        {
+            _out.printError("Error: Couldn't write to RS485 serial device, because the file descriptor is not valid: " + _settings->device);
+            return;
+        }
+        std::lock_guard<std::mutex> sendGuard(_sendMutex);
         //Before _sending is set to true wait for the last sending to finish. Without this line
         //the new sending is sometimes not detected when two packets are sent at the same time.
         while(_receivingSending) std::this_thread::sleep_for(std::chrono::microseconds(500));
         if(_bl->debugLevel > 4) _out.printDebug("Debug: RS485 device: Got lock for sending... (Packet: " + BaseLib::HelperFunctions::getHexString(packet) + ")");
         _lastPacketSent = BaseLib::HelperFunctions::getTime(); //Sending takes some time, so we set _lastPacketSent two times
         _sending = true;
-        /*if(_settings->oneWay && gpioDefined(1))
-        {
-        	if(!gpioOpen(1))
-			{
-				closeGPIO(1);
-				openGPIO(1, false);
-				if(!gpioOpen(1))
-				{
-					_out.printError("Error: Could not send RS485 packet. GPIO to enable sending is could not be opened.");
-					_sending = false;
-					_sendMutex.unlock();
-					return;
-				}
-			}
-        	setGPIO(1, !((bool)_settings->enableRXValue));
-        }*/
 		int32_t bytesWritten = 0;
 		_receivedSentPacket.clear();
 		if(_bl->debugLevel > 3 && printPacket) _out.printInfo("Info: Sending: " + BaseLib::HelperFunctions::getHexString(packet));
@@ -598,7 +575,8 @@ void RS485::writeToDevice(std::vector<uint8_t>& packet, bool printPacket)
 			if(i == -1)
 			{
 				if(errno == EAGAIN) continue;
-				throw(BaseLib::Exception("Error writing to RS485 serial device (3, " + std::to_string(errno) + "): " + _settings->device));
+				_out.printError("Error writing to RS485 serial device (3, " + std::to_string(errno) + "): " + _settings->device);
+				return;
 			}
 			bytesWritten += i;
 		}
@@ -613,48 +591,25 @@ void RS485::writeToDevice(std::vector<uint8_t>& packet, bool printPacket)
 				if(_receivingSending || !_receivedSentPacket.empty()) break;
 				std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			}
-			if(!_sendingMutex.try_lock_for(std::chrono::milliseconds(200)) && GD::bl->debugLevel >= 5)
+			std::unique_lock<std::timed_mutex> sendingGuard(_sendingMutex, std::defer_lock);
+			if(!sendingGuard.try_lock_for(std::chrono::milliseconds(200)) && GD::bl->debugLevel >= 5)
 			{
 				_out.printDebug("Debug: Could not get sendMutex lock.");
 			}
 			if(_receivedSentPacket.empty()) _out.printWarning("Error sending HomeMatic Wired packet: No sending detected.");
 			else if(_receivedSentPacket != packet) _out.printWarning("Error sending HomeMatic Wired packet: Collision (received packet was: " + BaseLib::HelperFunctions::getHexString(_receivedSentPacket) + ")");
-			_sendingMutex.unlock();
 		}
-		/*if(_settings->oneWay && gpioDefined(1))
-		{
-			if(!gpioOpen(1))
-			{
-				closeGPIO(1);
-				openGPIO(1, false);
-				if(!gpioOpen(1))
-				{
-					_sending = false;
-					_sendMutex.unlock();
-					return;
-				}
-			}
-			setGPIO(1, (bool)_settings->enableRXValue);
-		}*/
     }
     catch(const std::exception& ex)
     {
-    	_sendingMutex.unlock();
-    	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
-    {
-    	_sendingMutex.unlock();
     	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
     catch(...)
     {
-    	_sendingMutex.unlock();
     	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
     }
     _lastPacketSent = BaseLib::HelperFunctions::getTime();
     _sending = false;
-    _sendMutex.unlock();
 }
 
 void RS485::startListening()
@@ -685,10 +640,6 @@ void RS485::startListening()
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -705,14 +656,9 @@ void RS485::stopListening()
 		if(_fileDescriptor->descriptor != -1) closeDevice();
 		if(gpioDefined(1) && _settings->oneWay) closeGPIO(1);
 		_stopped = true;
-		_sendMutex.unlock(); //In case it is deadlocked - shouldn't happen of course
 		IPhysicalInterface::stopListening();
 	}
 	catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -741,10 +687,6 @@ void RS485::listen()
         }
     }
     catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }

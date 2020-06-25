@@ -47,10 +47,6 @@ std::shared_ptr<BaseLib::Systems::ICentral> HMWiredPeer::getCentral()
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
 	catch(...)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -137,10 +133,6 @@ void HMWiredPeer::worker()
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
 	catch(...)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -207,10 +199,6 @@ void HMWiredPeer::initializeLinkConfig(int32_t channel, std::shared_ptr<BaseLib:
 		if(result->errorStruct) GD::out.printError("Error: " + result->structValue->at("faultString")->stringValue);
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -627,10 +615,6 @@ std::string HMWiredPeer::handleCliCommand(std::string command)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -688,10 +672,6 @@ std::string HMWiredPeer::printConfig()
         return stringStream.str();
     }
     catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -897,10 +877,6 @@ std::vector<int32_t> HMWiredPeer::setConfigParameter(double index, double size, 
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
 	catch(...)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -932,10 +908,6 @@ std::vector<int32_t> HMWiredPeer::setMasterConfigParameter(int32_t channelIndex,
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -951,10 +923,6 @@ std::vector<int32_t> HMWiredPeer::setMasterConfigParameter(int32_t channelIndex,
 		return setConfigParameter(index, size, binaryValue);
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -993,10 +961,6 @@ std::vector<int32_t> HMWiredPeer::setMasterConfigParameter(int32_t channel, PPar
 		}
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -1155,10 +1119,6 @@ std::vector<uint8_t> HMWiredPeer::getConfigParameter(double index, double size, 
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
 	catch(...)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1190,10 +1150,6 @@ std::vector<uint8_t> HMWiredPeer::getMasterConfigParameter(int32_t channelIndex,
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1209,10 +1165,6 @@ std::vector<uint8_t> HMWiredPeer::getMasterConfigParameter(int32_t channelIndex,
 		return getConfigParameter(index, size);
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -1262,10 +1214,6 @@ std::vector<uint8_t> HMWiredPeer::getMasterConfigParameter(int32_t channel, PPar
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1295,10 +1243,6 @@ bool HMWiredPeer::ping(int32_t packetCount, bool waitForResponse)
 		}
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -1332,10 +1276,6 @@ void HMWiredPeer::addPeer(int32_t channel, std::shared_ptr<BaseLib::Systems::Bas
 		savePeers();
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -1375,10 +1315,6 @@ void HMWiredPeer::removePeer(int32_t channel, uint64_t id, int32_t remoteChannel
 		}
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -1423,10 +1359,6 @@ int32_t HMWiredPeer::getFreeEEPROMAddress(int32_t channel, bool isSender)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1454,10 +1386,6 @@ void HMWiredPeer::loadVariables(BaseLib::Systems::ICentral* central, std::shared
 		}
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -1497,10 +1425,6 @@ bool HMWiredPeer::load(BaseLib::Systems::ICentral* central)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1521,10 +1445,6 @@ void HMWiredPeer::saveVariables()
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1540,10 +1460,6 @@ void HMWiredPeer::savePeers()
 		saveVariable(12, serializedData);
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -1582,10 +1498,6 @@ void HMWiredPeer::serializePeers(std::vector<uint8_t>& encodedData)
 		}
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -1630,10 +1542,6 @@ void HMWiredPeer::unserializePeers(std::shared_ptr<std::vector<char>> serialized
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1650,10 +1558,6 @@ int32_t HMWiredPeer::getPhysicalIndexOffset(int32_t channel)
 		return functionIterator->second->physicalChannelIndexOffset;
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -1757,10 +1661,6 @@ void HMWiredPeer::restoreLinks()
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1790,10 +1690,6 @@ void HMWiredPeer::reset()
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
 	catch(...)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1814,10 +1710,6 @@ int32_t HMWiredPeer::getNewFirmwareVersion()
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1835,10 +1727,6 @@ std::string HMWiredPeer::getFirmwareVersionString(int32_t firmwareVersion)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1853,10 +1741,6 @@ bool HMWiredPeer::firmwareUpdateAvailable()
 		return _firmwareVersion > 0 && _firmwareVersion < getNewFirmwareVersion();
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -1962,10 +1846,6 @@ void HMWiredPeer::getValuesFromPacket(std::shared_ptr<HMWiredPacket> packet, std
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1982,10 +1862,6 @@ std::shared_ptr<HMWiredPacket> HMWiredPeer::getResponse(std::shared_ptr<HMWiredP
 		return response;
 	}
 	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
@@ -2058,14 +1934,11 @@ PVariable HMWiredPeer::getValueFromDevice(PParameter& parameter, int32_t channel
 		std::shared_ptr<HMWiredPacket> response = getResponse(packet);
 		if(!response) return PVariable(new Variable(VariableType::tVoid));
 
-		std::vector<uint8_t> parameterData = valuesCentral[channel][parameter->id].getBinaryData();
-		return parameter->convertFromPacket(parameterData, true);
+		auto& rpcConfigurationParameter = valuesCentral[channel][parameter->id];
+		std::vector<uint8_t> parameterData = rpcConfigurationParameter.getBinaryData();
+		return parameter->convertFromPacket(parameterData, rpcConfigurationParameter.mainRole(), true);
 	}
 	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
@@ -2089,7 +1962,7 @@ PParameterGroup HMWiredPeer::getParameterSet(int32_t channel, ParameterGroup::Ty
 			if(!parameter.rpcParameter) parameterGroup = rpcFunction->getParameterGroup(type);
 			else
 			{
-				int32_t index = parameter.rpcParameter->logical->type == BaseLib::DeviceDescription::ILogical::Type::Enum::tBoolean ? parameter.rpcParameter->convertFromPacket(value, false)->booleanValue : parameter.rpcParameter->convertFromPacket(value, false)->integerValue;
+				int32_t index = parameter.rpcParameter->logical->type == BaseLib::DeviceDescription::ILogical::Type::Enum::tBoolean ? parameter.rpcParameter->convertFromPacket(value, parameter.mainRole(), false)->booleanValue : parameter.rpcParameter->convertFromPacket(value, parameter.mainRole(), false)->integerValue;
 				if(index > 0)
 				{
 					index--;
@@ -2115,10 +1988,6 @@ PParameterGroup HMWiredPeer::getParameterSet(int32_t channel, ParameterGroup::Ty
 		return parameterGroup;
 	}
 	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
@@ -2197,7 +2066,7 @@ void HMWiredPeer::packetReceived(std::shared_ptr<HMWiredPacket> packet)
 					}
 
 					valueKeys[*j]->push_back(i->first);
-					rpcValues[*j]->push_back(currentParameter->convertFromPacket(i->second.value, true));
+					rpcValues[*j]->push_back(currentParameter->convertFromPacket(i->second.value, parameter.mainRole(), true));
 				}
 			}
 		}
@@ -2221,10 +2090,6 @@ void HMWiredPeer::packetReceived(std::shared_ptr<HMWiredPacket> packet)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -2243,10 +2108,6 @@ PVariable HMWiredPeer::getDeviceInfo(BaseLib::PRpcClientInfo clientInfo, std::ma
 		return info;
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -2290,14 +2151,15 @@ PVariable HMWiredPeer::getParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
 				if(!i->second->readable) continue;
 				if(valuesCentral.find(channel) == valuesCentral.end()) continue;
 				if(valuesCentral[channel].find(i->second->id) == valuesCentral[channel].end()) continue;
-				std::vector<uint8_t> parameterData = valuesCentral[channel][i->second->id].getBinaryData();
-				element = i->second->convertFromPacket(parameterData);
+				auto& parameter = valuesCentral[channel][i->second->id];
+				std::vector<uint8_t> parameterData = parameter.getBinaryData();
+				element = i->second->convertFromPacket(parameterData, parameter.mainRole(), false);
 			}
 			else if(type ==ParameterGroup::Type::Enum::config)
 			{
 				std::vector<uint8_t> value = getMasterConfigParameter(channel, parameterGroup, i->second);
 				if(value.empty()) return Variable::createError(-32500, "Could not read config parameter. See log for more details.");
-				element = i->second->convertFromPacket(value);
+				element = i->second->convertFromPacket(value, Role(), false);
 			}
 			else if(type == ParameterGroup::Type::Enum::link)
 			{
@@ -2309,7 +2171,7 @@ PVariable HMWiredPeer::getParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
 
 				std::vector<uint8_t> value = getConfigParameter(remotePeer->configEEPROMAddress + i->second->physical->memoryIndex, i->second->physical->size);
 				if(value.empty()) return Variable::createError(-32500, "Could not read config parameter. See log for more details.");
-				element = i->second->convertFromPacket(value);
+				element = i->second->convertFromPacket(value, Role(), false);
 			}
 
 			if(!element) continue;
@@ -2319,10 +2181,6 @@ PVariable HMWiredPeer::getParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
 		return variables;
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -2354,10 +2212,6 @@ PVariable HMWiredPeer::getParamsetDescription(BaseLib::PRpcClientInfo clientInfo
 		return Peer::getParamsetDescription(clientInfo, channel, parameterGroup, checkAcls);
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -2400,7 +2254,7 @@ PVariable HMWiredPeer::putParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
 				PParameter currentParameter = parameterGroup->getParameter(i->first);
 				if(!currentParameter) continue;
 				std::vector<uint8_t> value;
-				currentParameter->convertToPacket(i->second, value);
+				currentParameter->convertToPacket(i->second, Role(), value);
 				std::vector<int32_t> result;
 				if(currentParameter->physical->operationType == IPhysical::OperationType::Enum::memory) result = setMasterConfigParameter(channel, parameterGroup, currentParameter, value);
 				else if(currentParameter->physical->operationType == IPhysical::OperationType::Enum::store)
@@ -2444,7 +2298,7 @@ PVariable HMWiredPeer::putParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
 				if(!currentParameter) continue;
 				if(currentParameter->physical->memoryIndexOperation == IPhysical::MemoryIndexOperation::Enum::none) continue;
 				std::vector<uint8_t> value;
-				currentParameter->convertToPacket(i->second, value);
+				currentParameter->convertToPacket(i->second, Role(), value);
 				std::vector<int32_t> result = setConfigParameter(remotePeer->configEEPROMAddress + currentParameter->physical->memoryIndex, currentParameter->physical->size, value);
 				GD::out.printInfo("Info: Parameter " + i->first + " of peer " + std::to_string(_peerID) + " was set to 0x" + BaseLib::HelperFunctions::getHexString(value) + ".");
 				//Only send to device when parameter is of type eeprom
@@ -2469,10 +2323,6 @@ PVariable HMWiredPeer::putParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
 		return PVariable(new Variable(VariableType::tVoid));
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -2510,7 +2360,7 @@ PVariable HMWiredPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 		if(rpcParameter->physical->operationType == IPhysical::OperationType::Enum::store)
 		{
 			std::vector<uint8_t> parameterData;
-			rpcParameter->convertToPacket(value, parameterData);
+			rpcParameter->convertToPacket(value, parameter.mainRole(), parameterData);
 			parameter.setBinaryData(parameterData);
 			saveParameter(parameter.databaseId, ParameterGroup::Type::Enum::variables, channel, valueKey, parameterData);
 			if(!valueKeys->empty())
@@ -2519,7 +2369,7 @@ PVariable HMWiredPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
                 raiseEvent(clientInfo->initInterfaceId, _peerID, channel, valueKeys, values);
                 raiseRPCEvent(clientInfo->initInterfaceId, _peerID, channel, address, valueKeys, values);
 			}
-			return PVariable(new Variable(VariableType::tVoid));
+			return std::make_shared<Variable>(VariableType::tVoid);
 		}
 		else if(rpcParameter->physical->operationType != IPhysical::OperationType::Enum::command) return Variable::createError(-6, "Parameter is not settable.");
 		PToggle toggleCast;
@@ -2536,7 +2386,7 @@ PVariable HMWiredPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 			PVariable toggleValue;
 			if(toggleRPCParam->logical->type == ILogical::Type::Enum::tBoolean)
 			{
-				toggleValue = toggleRPCParam->convertFromPacket(parameterData);
+				toggleValue = toggleRPCParam->convertFromPacket(parameterData, toggleParam.mainRole(), false);
 				toggleValue->booleanValue = !toggleValue->booleanValue;
 			}
 			else if(toggleRPCParam->logical->type == ILogical::Type::Enum::tInteger ||
@@ -2546,7 +2396,7 @@ PVariable HMWiredPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 				std::vector<uint8_t> temp({0});
 				if(currentToggleValue != toggleCast->on) temp.at(0) = toggleCast->on;
 				else temp.at(0) = toggleCast->off;
-				toggleValue = toggleRPCParam->convertFromPacket(temp);
+				toggleValue = toggleRPCParam->convertFromPacket(temp, toggleParam.mainRole(), false);
 			}
 			else return Variable::createError(-6, "Toggle parameter has to be of type boolean, float or integer.");
 			return setValue(clientInfo, channel, toggleCast->parameter, toggleValue, wait);
@@ -2556,7 +2406,7 @@ PVariable HMWiredPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 		if(_rpcDevice->packetsById.find(setRequest) == _rpcDevice->packetsById.end()) return Variable::createError(-6, "No frame was found for parameter " + valueKey);
 		PPacket frame = _rpcDevice->packetsById[setRequest];
 		std::vector<uint8_t> data;
-		rpcParameter->convertToPacket(value, data);
+		rpcParameter->convertToPacket(value, parameter.mainRole(), data);
 		parameter.setBinaryData(data);
 		saveParameter(parameter.databaseId, ParameterGroup::Type::Enum::variables, channel, valueKey, data);
 		if(_bl->debugLevel > 4) GD::out.printDebug("Debug: " + valueKey + " of peer " + std::to_string(_peerID) + " with serial number " + _serialNumber + ":" + std::to_string(channel) + " was set to " + BaseLib::HelperFunctions::getHexString(data) + ".");
@@ -2629,10 +2479,10 @@ PVariable HMWiredPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 				if(!currentParameter) continue;
 				PVariable logicalDefaultValue = currentParameter->logical->getDefaultValue();
 				std::vector<uint8_t> defaultValue;
-				currentParameter->convertToPacket(logicalDefaultValue, defaultValue);
-				if(!valuesCentral.at(channel).at(*j).equals(defaultValue))
+                BaseLib::Systems::RpcConfigurationParameter tempParam = valuesCentral.at(channel).at(*j);
+				currentParameter->convertToPacket(logicalDefaultValue, tempParam.mainRole(), defaultValue);
+				if(!tempParam.equals(defaultValue))
 				{
-					BaseLib::Systems::RpcConfigurationParameter tempParam = valuesCentral.at(channel).at(*j);
 					tempParam.setBinaryData(defaultValue);
 					saveParameter(tempParam.databaseId, ParameterGroup::Type::Enum::variables, channel, *j, defaultValue);
 					GD::out.printInfo( "Info: Parameter \"" + *j + "\" was reset to " + BaseLib::HelperFunctions::getHexString(defaultValue) + ". Peer: " + std::to_string(_peerID) + " Serial number: " + _serialNumber + " Frame: " + frame->id);
@@ -2663,10 +2513,6 @@ PVariable HMWiredPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 		}
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }

@@ -69,10 +69,6 @@ HMW_LGW::~HMW_LGW()
     {
     	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -105,10 +101,6 @@ void HMW_LGW::search(std::vector<int32_t>& foundDevices)
 		foundDevices.insert(foundDevices.begin(), _searchResult.begin(), _searchResult.end());
 	}
 	catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -206,10 +198,6 @@ void HMW_LGW::sendPacket(std::shared_ptr<BaseLib::Systems::Packet> packet)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -242,10 +230,6 @@ void HMW_LGW::getResponse(const std::vector<char>& packet, std::vector<uint8_t>&
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -262,10 +246,6 @@ void HMW_LGW::send(std::string hexString, bool raw)
 		send(data, raw);
 	}
 	catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -305,10 +285,6 @@ void HMW_LGW::send(const std::vector<char>& data, bool raw)
     {
     	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -333,10 +309,6 @@ void HMW_LGW::startListening()
 		IPhysicalInterface::startListening();
 	}
     catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -368,10 +340,6 @@ void HMW_LGW::reconnect()
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -396,10 +364,6 @@ void HMW_LGW::stopListening()
 		IPhysicalInterface::stopListening();
 	}
 	catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -555,10 +519,6 @@ void HMW_LGW::sendKeepAlivePacket()
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -634,8 +594,7 @@ void HMW_LGW::listen()
 
         	if(_bl->debugLevel >= 6)
         	{
-        		_out.printDebug("Debug: Packet received on port " + _settings->port + ". Raw data:");
-        		_out.printBinary(data);
+        		_out.printDebug("Debug: Packet received on port " + _settings->port + ". Raw data: " + BaseLib::HelperFunctions::getHexString(data));
         	}
 
         	processData(data);
@@ -645,10 +604,6 @@ void HMW_LGW::listen()
         }
     }
     catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -764,10 +719,6 @@ bool HMW_LGW::aesKeyExchange(std::vector<uint8_t>& data)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -788,10 +739,6 @@ void HMW_LGW::buildPacket(std::vector<char>& packet, const std::vector<char>& pa
 		escapePacket(unescapedPacket, packet);
 	}
     catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -819,10 +766,6 @@ void HMW_LGW::escapePacket(const std::vector<char>& unescapedPacket, std::vector
 		}
 	}
 	catch(const std::exception& ex)
-    {
-    	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -858,10 +801,6 @@ void HMW_LGW::processPacket(std::vector<uint8_t>& packet)
 		if(_initComplete) parsePacket(packet);
 	}
     catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -943,10 +882,6 @@ void HMW_LGW::processData(std::vector<uint8_t>& data)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1000,10 +935,6 @@ void HMW_LGW::parsePacket(std::vector<uint8_t>& packet)
 		}
 	}
     catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
