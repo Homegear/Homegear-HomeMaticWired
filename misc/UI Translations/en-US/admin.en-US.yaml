@@ -1,0 +1,25 @@
+---
+# {{{ Pairing info
+l10n.homematicwired.pairingInfo.centraladdress: 'Address of central'
+l10n.homematicwired.pairingInfo.key: 'Security key'
+l10n.homematicwired.pairingInfo.id: 'ID'
+l10n.homematicwired.pairingInfo.hostname: 'IP address'
+l10n.homematicwired.pairingInfo.password: 'Password'
+l10n.homematicwired.pairingInfo.default: 'Default'
+l10n.homematicwired.pairingInfo.device: 'Device'
+l10n.homematicwired.pairingInfo.gpio1: 'GPIO 1'
+l10n.homematicwired.pairingInfo.gpio2: 'GPIO 2'
+l10n.homematicwired.pairingInfo.stackposition: 'Stack position'
+l10n.homematicwired.pairingInfo.interruptpin: 'Interrupt pin'
+l10n.homematicwired.pairingInfo.key: 'Key'
+l10n.homematicwired.pairingInfo.sendfix: 'Send fix'
+l10n.homematicwired.pairingInfo.enablerxvalue: 'Value to activate RX'
+l10n.homematicwired.pairingInfo.enabletxvalue: 'Value to activate TX'
+# }}}
+
+# {{{ Pairing
+l10n.homematicwired.pairing.alreadyPaired: 'This peer is already paired to central with address 0x%variable0%.'
+l10n.homematicwired.pairing.samePeer: 'A peer with the same address but different serial number or device type is already paired to this central.'
+l10n.homematicwired.pairing.unsupportedDeviceType: 'Device type 0x%variable0% is not supported.'
+l10n.homematicwired.pairing.unknownError: 'Unknown error during pairing.'
+# }}}
