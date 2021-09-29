@@ -116,19 +116,19 @@ PVariable HMWired::getPairingInfo()
 
 		auto field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
 		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(0));
-		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.id")));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.homematicwired.pairingInfo.id")));
 		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("string")));
 		interface->structValue->emplace("id", field);
 
 		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
 		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(1));
-		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.hostname")));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.homematicwired.pairingInfo.hostname")));
 		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("string")));
 		interface->structValue->emplace("host", field);
 
 		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
 		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(2));
-		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.key")));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.homematicwired.pairingInfo.key")));
 		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("string")));
 		interface->structValue->emplace("lanKey", field);
 
@@ -152,13 +152,13 @@ PVariable HMWired::getPairingInfo()
 
 		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
 		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(0));
-		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.id")));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.homematicwired.pairingInfo.id")));
 		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("string")));
 		interface->structValue->emplace("id", field);
 
 		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
 		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(1));
-		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.device")));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.homematicwired.pairingInfo.device")));
 		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("string")));
 		interface->structValue->emplace("device", field);
 
@@ -182,40 +182,40 @@ PVariable HMWired::getPairingInfo()
 
 		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
 		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(0));
-		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.id")));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.homematicwired.pairingInfo.id")));
 		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("string")));
 		interface->structValue->emplace("id", field);
 
 		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
 		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(1));
-		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.device")));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.homematicwired.pairingInfo.device")));
 		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("string")));
 		interface->structValue->emplace("device", field);
 
 		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
 		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(2));
-		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.gpio1")));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.homematicwired.pairingInfo.gpio1")));
 		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("integer")));
 		field->structValue->emplace("default", std::make_shared<BaseLib::Variable>(17));
 		interface->structValue->emplace("gpio1", field);
 
 		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
 		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(3));
-		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.enablerxvalue")));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.homematicwired.pairingInfo.enablerxvalue")));
 		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("boolean")));
 		field->structValue->emplace("default", std::make_shared<BaseLib::Variable>(false));
 		interface->structValue->emplace("enableRxValue", field);
 
 		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
 		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(4));
-		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.gpio2")));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.homematicwired.pairingInfo.gpio2")));
 		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("integer")));
 		field->structValue->emplace("default", std::make_shared<BaseLib::Variable>(18));
 		interface->structValue->emplace("gpio2", field);
 
 		field = std::make_shared<BaseLib::Variable>(BaseLib::VariableType::tStruct);
 		field->structValue->emplace("pos", std::make_shared<BaseLib::Variable>(5));
-		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.common.enablerxvalue")));
+		field->structValue->emplace("label", std::make_shared<BaseLib::Variable>(std::string("l10n.homematicwired.pairingInfo.enabletxvalue")));
 		field->structValue->emplace("type", std::make_shared<BaseLib::Variable>(std::string("boolean")));
 		field->structValue->emplace("default", std::make_shared<BaseLib::Variable>(true));
 		interface->structValue->emplace("enableTxValue", field);

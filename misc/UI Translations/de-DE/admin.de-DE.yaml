@@ -1,0 +1,24 @@
+---
+# {{{ Pairing info
+l10n.homematicwired.pairingInfo.centraladdress: 'Zentralenadresse'
+l10n.homematicwired.pairingInfo.key: 'Sicherheitsschlüssel'
+l10n.homematicwired.pairingInfo.id: 'ID'
+l10n.homematicwired.pairingInfo.hostname: 'IP-Adresse'
+l10n.homematicwired.pairingInfo.password: 'Kennwort'
+l10n.homematicwired.pairingInfo.default: 'Standard'
+l10n.homematicwired.pairingInfo.device: 'Gerät'
+l10n.homematicwired.pairingInfo.gpio1: 'GPIO 1'
+l10n.homematicwired.pairingInfo.gpio2: 'GPIO 2'
+l10n.homematicwired.pairingInfo.stackposition: 'Stapelposition'
+l10n.homematicwired.pairingInfo.interruptpin: 'Interrupt-Pin'
+l10n.homematicwired.pairingInfo.sendfix: 'Sendefix'
+l10n.homematicwired.pairingInfo.enablerxvalue: 'Wert für RX-Aktivierung'
+l10n.homematicwired.pairingInfo.enabletxvalue: 'Wert für TX-Aktivierung'
+# }}}
+
+# {{{ Pairing
+l10n.homematicwired.pairing.alreadyPaired: 'Der Peer mit der Adresse 0x%variable0% ist bereits mit der Zentrale gekoppelt.'
+l10n.homematicwired.pairing.samePeer: 'Ein Peer mit derselben Adresse, aber unterschiedlicher Seriennummer oder unterschiedlichem Gerätetyp ist bereits mit dieser Zentrale gekoppelt.'
+l10n.homematicwired.pairing.unsupportedDeviceType: 'Der Gerätetyp 0x%variable0% wird nicht unterstützt.'
+l10n.homematicwired.pairing.unknownError: 'Unbekannter Fehler beim Pairing.'
+# }}}
