@@ -18,6 +18,11 @@ override_dh_auto_install:
 	chown -R root:root $(CURDIR)/debian/homegear-homematicwired/usr/share/homegear
 	chmod -R 550 $(CURDIR)/debian/homegear-homematicwired/usr/share/homegear
 
+	mkdir -p $(CURDIR)/debian/homegear-homematicwired/var/lib/homegear/admin-ui/translations/modules/homematicwired
+	cp -R $(CURDIR)/misc/UI\ Translations/* $(CURDIR)/debian/homegear-homematicwired/var/lib/homegear/admin-ui/translations/modules/homematicwired
+	chown -R root:root $(CURDIR)/debian/homegear-homematicwired/var/lib/homegear/admin-ui/translations/modules/homematicwired
+	chmod -R 555 $(CURDIR)/debian/homegear-homematicwired/var/lib/homegear/admin-ui/translations/modules/homematicwired
+
 override_dh_strip:
 	dh_strip --dbg-package=homegear-homematicwired
 
