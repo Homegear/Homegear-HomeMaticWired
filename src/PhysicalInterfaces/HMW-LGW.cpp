@@ -30,918 +30,771 @@
 #include "HMW-LGW.h"
 #include "../GD.h"
 
-namespace HMWired
-{
-HMW_LGW::HMW_LGW(std::shared_ptr<BaseLib::Systems::PhysicalInterfaceSettings> settings) : IHMWiredInterface(settings)
-{
-	_initComplete = false;
-	_waitingForResponse = false;
+namespace HMWired {
+HMW_LGW::HMW_LGW(std::shared_ptr<BaseLib::Systems::PhysicalInterfaceSettings> settings) : IHMWiredInterface(settings) {
+  _initComplete = false;
+  _waitingForResponse = false;
+  _searchFinished = false;
+
+  _out.init(GD::bl);
+  _out.setPrefix(GD::out.getPrefix() + "HMW-LGW \"" + settings->id + "\": ");
+
+  signal(SIGPIPE, SIG_IGN);
+
+  C1Net::TcpSocketInfo tcp_socket_info;
+  auto dummy_socket = std::make_shared<C1Net::Socket>(-1);
+  _socket = std::make_unique<C1Net::TcpSocket>(tcp_socket_info, dummy_socket);
+
+  if (!settings) {
+    _out.printCritical("Critical: Error initializing HMW-LGW. Settings pointer is empty.");
+    return;
+  }
+  if (settings->lanKey.empty()) {
+    _out.printError("Error: No security key specified in homematicwired.conf.");
+    return;
+  }
+}
+
+HMW_LGW::~HMW_LGW() {
+  try {
+    _stopCallbackThread = true;
+    _bl->threadManager.join(_listenThread);
+    aesCleanup();
+  }
+  catch (const std::exception &ex) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+  }
+  catch (...) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
+}
+
+void HMW_LGW::search(std::vector<int32_t> &foundDevices) {
+  try {
+    int32_t startTime = BaseLib::HelperFunctions::getTimeSeconds();
+    foundDevices.clear();
+    _searchResult.clear();
     _searchFinished = false;
+    _waitingForResponse = true;
 
-	_out.init(GD::bl);
-	_out.setPrefix(GD::out.getPrefix() + "HMW-LGW \"" + settings->id + "\": ");
+    std::vector<char> startPacket;
+    std::vector<char> payload{0x44, 0x00, (char)0xFF};
 
-	signal(SIGPIPE, SIG_IGN);
+    buildPacket(startPacket, payload);
+    _packetIndex++;
+    send(startPacket, false);
 
-	_socket = std::unique_ptr<BaseLib::TcpSocket>(new BaseLib::TcpSocket(_bl));
+    while (!_searchFinished && BaseLib::HelperFunctions::getTimeSeconds() - startTime < 180) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+    if (BaseLib::HelperFunctions::getTimeSeconds() - startTime >= 180) _out.printError("Error: Device search timed out.");
 
-	if(!settings)
-	{
-		_out.printCritical("Critical: Error initializing HMW-LGW. Settings pointer is empty.");
-		return;
-	}
-	if(settings->lanKey.empty())
-	{
-		_out.printError("Error: No security key specified in homematicwired.conf.");
-		return;
-	}
+    foundDevices.insert(foundDevices.begin(), _searchResult.begin(), _searchResult.end());
+  }
+  catch (const std::exception &ex) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+  }
+  catch (...) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
+  _waitingForResponse = false;
 }
 
-HMW_LGW::~HMW_LGW()
-{
-	try
-	{
-		_stopCallbackThread = true;
-		_bl->threadManager.join(_listenThread);
-		aesCleanup();
-	}
-    catch(const std::exception& ex)
-    {
-    	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+void HMW_LGW::sendPacket(std::shared_ptr<BaseLib::Systems::Packet> packet) {
+  try {
+    if (!packet) {
+      _out.printWarning("Warning: Packet was nullptr.");
+      return;
     }
-    catch(...)
-    {
-    	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    _lastAction = BaseLib::HelperFunctions::getTime();
+
+    std::shared_ptr<HMWiredPacket> hmwiredPacket(std::dynamic_pointer_cast<HMWiredPacket>(packet));
+    if (!hmwiredPacket) return;
+
+    if (!_initComplete) {
+      _out.printWarning("Warning: !!!Not!!! sending (Port " + _settings->port + "), because the init sequence is not completed: " + hmwiredPacket->hexString());
+      return;
     }
-}
 
-void HMW_LGW::search(std::vector<int32_t>& foundDevices)
-{
-	try
-	{
-		int32_t startTime = BaseLib::HelperFunctions::getTimeSeconds();
-		foundDevices.clear();
-		_searchResult.clear();
-		_searchFinished = false;
-        _waitingForResponse = true;
+    if (hmwiredPacket->type() == HMWiredPacketType::ackMessage) return; //Ignore ACK packets as they're sent automatically
 
-		std::vector<char> startPacket;
-		std::vector<char> payload{ 0x44, 0x00, (char)0xFF };
+    std::vector<char> packetBytes = hmwiredPacket->byteArrayLgw();
+    if (_bl->debugLevel >= 4) _out.printInfo("Info: Sending (" + _settings->id + "): " + _bl->hf.getHexString(packetBytes));
 
-		buildPacket(startPacket, payload);
-		_packetIndex++;
-		send(startPacket, false);
-
-		while(!_searchFinished && BaseLib::HelperFunctions::getTimeSeconds() - startTime < 180)
-		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(500));
-		}
-		if(BaseLib::HelperFunctions::getTimeSeconds() - startTime >= 180) _out.printError("Error: Device search timed out.");
-
-		foundDevices.insert(foundDevices.begin(), _searchResult.begin(), _searchResult.end());
-	}
-	catch(const std::exception& ex)
+    if (hmwiredPacket->destinationAddress() == -1) //Broadcast packet
     {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(...)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    }
-    _waitingForResponse = false;
-}
-
-void HMW_LGW::sendPacket(std::shared_ptr<BaseLib::Systems::Packet> packet)
-{
-	try
-	{
-		if(!packet)
-		{
-			_out.printWarning("Warning: Packet was nullptr.");
-			return;
-		}
-		_lastAction = BaseLib::HelperFunctions::getTime();
-
-        std::shared_ptr<HMWiredPacket> hmwiredPacket(std::dynamic_pointer_cast<HMWiredPacket>(packet));
-        if(!hmwiredPacket) return;
-
-		if(!_initComplete)
-    	{
-    		_out.printWarning("Warning: !!!Not!!! sending (Port " + _settings->port + "), because the init sequence is not completed: " + hmwiredPacket->hexString());
-    		return;
-    	}
-
-		if(hmwiredPacket->type() == HMWiredPacketType::ackMessage) return; //Ignore ACK packets as they're sent automatically
-
-		std::vector<char> packetBytes = hmwiredPacket->byteArrayLgw();
-		if(_bl->debugLevel >= 4) _out.printInfo("Info: Sending (" + _settings->id + "): " + _bl->hf.getHexString(packetBytes));
-
-		if(hmwiredPacket->destinationAddress() == -1) //Broadcast packet
-		{
-			std::vector<char> requestPacket;
-			std::vector<char> payload{ 0x53, 0 };
-			payload.insert(payload.end(), packetBytes.begin(), packetBytes.end());
-			buildPacket(requestPacket, payload);
-			_packetIndex++;
-			send(requestPacket, false);
-		}
-		else if(hmwiredPacket->type() == HMWiredPacketType::ackMessage)
-		{
-			for(int32_t j = 0; j < 3; j++)
-			{
-				std::vector<uint8_t> responsePacket;
-				std::vector<char> requestPacket;
-				std::vector<char> payload { 0x53, (char)0xC8 };
-				payload.insert(payload.end(), packetBytes.begin(), packetBytes.end());
-				buildPacket(requestPacket, payload);
-				_packetIndex++;
-				getResponse(requestPacket, responsePacket, _packetIndex - 1, 0x61);
-				if(!responsePacket.empty()) break;
-				if(j == 2)
-				{
-					_out.printInfo("Info: No response from HMW-LGW to packet " + _bl->hf.getHexString(packetBytes));
-					return;
-				}
-			}
-		}
-		else
-		{
-			for(int32_t j = 0; j < 3; j++) //This causes the packet to be sent 9 times all together.
-			{
-				std::vector<uint8_t> responsePacket;
-				std::vector<char> requestPacket;
-				std::vector<char> payload { 0x53, (char)0xC8 };
-				payload.insert(payload.end(), packetBytes.begin(), packetBytes.end());
-				buildPacket(requestPacket, payload);
-				_packetIndex++;
-				getResponse(requestPacket, responsePacket, _packetIndex - 1, 0x72);
-				if(!responsePacket.empty())
-				{
-					int32_t senderAddress = hmwiredPacket->destinationAddress();
-					int32_t destinationAddress = hmwiredPacket->senderAddress();
-					std::shared_ptr<HMWiredPacket> responseHmwiredPacket(new HMWiredPacket(responsePacket, true, BaseLib::HelperFunctions::getTime(), senderAddress, destinationAddress));
-					_lastPacketReceived = BaseLib::HelperFunctions::getTime();
-					raisePacketReceived(responseHmwiredPacket);
-					break;
-				}
-				if(j == 2)
-				{
-					_out.printInfo("Info: No response from HMW-LGW to packet " + _bl->hf.getHexString(packetBytes));
-					return;
-				}
-			}
-		}
-
-		_lastPacketSent = BaseLib::HelperFunctions::getTime();
-	}
-	catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(...)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    }
-}
-
-void HMW_LGW::getResponse(const std::vector<char>& packet, std::vector<uint8_t>& response, uint8_t messageCounter, uint8_t responseType)
-{
-	try
-    {
-		if(packet.size() < 8 || _stopped) return;
-		_waitingForResponse = true;
-		std::shared_ptr<Request> request(new Request(responseType));
-		std::unique_lock<std::mutex> requestsGuard(_requestsMutex);
-		_requests[messageCounter] = request;
-        requestsGuard.unlock();
-		std::unique_lock<std::mutex> lock(request->mutex);
-		send(packet, false);
-		if(!request->conditionVariable.wait_for(lock, std::chrono::milliseconds(800), [&] { return request->mutexReady; }))
-		{
-			_out.printError("Error: No response received to packet: " + _bl->hf.getHexString(packet));
-		}
-		response = request->response;
-
-        requestsGuard.lock();
-		_requests.erase(messageCounter);
-        requestsGuard.unlock();
-	}
-	catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(...)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    }
-    _waitingForResponse = false;
-}
-
-void HMW_LGW::send(std::string hexString, bool raw)
-{
-	try
-    {
-		if(hexString.empty()) return;
-		std::vector<char> data(&hexString.at(0), &hexString.at(0) + hexString.size());
-		send(data, raw);
-	}
-	catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(...)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    }
-}
-
-void HMW_LGW::send(const std::vector<char>& data, bool raw)
-{
-    try
-    {
-    	if(data.size() < 3) return; //Otherwise error in printInfo
-    	std::vector<char> encryptedData;
-    	if(!raw) encryptedData = encrypt(data);
-    	_sendMutex.lock();
-    	if(!_socket->connected() || _stopped)
-    	{
-    		_out.printWarning("Warning: !!!Not!!! sending (Port " + _settings->port + "): " + _bl->hf.getHexString(data));
-    		_sendMutex.unlock();
-    		return;
-    	}
-    	if(_bl->debugLevel >= 5)
-        {
-            _out.printDebug("Debug: Sending (Port " + _settings->port + "): " + _bl->hf.getHexString(data));
+      std::vector<char> requestPacket;
+      std::vector<char> payload{0x53, 0};
+      payload.insert(payload.end(), packetBytes.begin(), packetBytes.end());
+      buildPacket(requestPacket, payload);
+      _packetIndex++;
+      send(requestPacket, false);
+    } else if (hmwiredPacket->type() == HMWiredPacketType::ackMessage) {
+      for (int32_t j = 0; j < 3; j++) {
+        std::vector<uint8_t> responsePacket;
+        std::vector<char> requestPacket;
+        std::vector<char> payload{0x53, (char)0xC8};
+        payload.insert(payload.end(), packetBytes.begin(), packetBytes.end());
+        buildPacket(requestPacket, payload);
+        _packetIndex++;
+        getResponse(requestPacket, responsePacket, _packetIndex - 1, 0x61);
+        if (!responsePacket.empty()) break;
+        if (j == 2) {
+          _out.printInfo("Info: No response from HMW-LGW to packet " + _bl->hf.getHexString(packetBytes));
+          return;
         }
-    	(!raw) ? _socket->proofwrite(encryptedData) : _socket->proofwrite(data);
-    	 _sendMutex.unlock();
-    	 return;
+      }
+    } else {
+      for (int32_t j = 0; j < 3; j++) //This causes the packet to be sent 9 times all together.
+      {
+        std::vector<uint8_t> responsePacket;
+        std::vector<char> requestPacket;
+        std::vector<char> payload{0x53, (char)0xC8};
+        payload.insert(payload.end(), packetBytes.begin(), packetBytes.end());
+        buildPacket(requestPacket, payload);
+        _packetIndex++;
+        getResponse(requestPacket, responsePacket, _packetIndex - 1, 0x72);
+        if (!responsePacket.empty()) {
+          int32_t senderAddress = hmwiredPacket->destinationAddress();
+          int32_t destinationAddress = hmwiredPacket->senderAddress();
+          std::shared_ptr<HMWiredPacket> responseHmwiredPacket(new HMWiredPacket(responsePacket, true, BaseLib::HelperFunctions::getTime(), senderAddress, destinationAddress));
+          _lastPacketReceived = BaseLib::HelperFunctions::getTime();
+          raisePacketReceived(responseHmwiredPacket);
+          break;
+        }
+        if (j == 2) {
+          _out.printInfo("Info: No response from HMW-LGW to packet " + _bl->hf.getHexString(packetBytes));
+          return;
+        }
+      }
     }
-    catch(const BaseLib::SocketOperationException& ex)
-    {
-    	_out.printError(ex.what());
+
+    _lastPacketSent = BaseLib::HelperFunctions::getTime();
+  }
+  catch (const std::exception &ex) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+  }
+  catch (...) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
+}
+
+void HMW_LGW::getResponse(const std::vector<char> &packet, std::vector<uint8_t> &response, uint8_t messageCounter, uint8_t responseType) {
+  try {
+    if (packet.size() < 8 || _stopped) return;
+    _waitingForResponse = true;
+    std::shared_ptr<Request> request(new Request(responseType));
+    std::unique_lock<std::mutex> requestsGuard(_requestsMutex);
+    _requests[messageCounter] = request;
+    requestsGuard.unlock();
+    std::unique_lock<std::mutex> lock(request->mutex);
+    send(packet, false);
+    if (!request->conditionVariable.wait_for(lock, std::chrono::milliseconds(800), [&] { return request->mutexReady; })) {
+      _out.printError("Error: No response received to packet: " + _bl->hf.getHexString(packet));
     }
-    catch(const std::exception& ex)
-    {
-    	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    response = request->response;
+
+    requestsGuard.lock();
+    _requests.erase(messageCounter);
+    requestsGuard.unlock();
+  }
+  catch (const std::exception &ex) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+  }
+  catch (...) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
+  _waitingForResponse = false;
+}
+
+void HMW_LGW::send(std::string hexString, bool raw) {
+  try {
+    if (hexString.empty()) return;
+    std::vector<char> data(&hexString.at(0), &hexString.at(0) + hexString.size());
+    send(data, raw);
+  }
+  catch (const std::exception &ex) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+  }
+  catch (...) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
+}
+
+void HMW_LGW::send(const std::vector<char> &data, bool raw) {
+  try {
+    if (data.size() < 3) return; //Otherwise error in printInfo
+    std::vector<char> encryptedData;
+    if (!raw) encryptedData = encrypt(data);
+    _sendMutex.lock();
+    if (!_socket->Connected() || _stopped) {
+      _out.printWarning("Warning: !!!Not!!! sending (Port " + _settings->port + "): " + _bl->hf.getHexString(data));
+      _sendMutex.unlock();
+      return;
     }
-    catch(...)
-    {
-    	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    if (_bl->debugLevel >= 5) {
+      _out.printDebug("Debug: Sending (Port " + _settings->port + "): " + _bl->hf.getHexString(data));
     }
-    _stopped = true;
+    (!raw) ? _socket->Send((uint8_t *)encryptedData.data(), encryptedData.size()) : _socket->Send((uint8_t *)data.data(), data.size());
     _sendMutex.unlock();
+    return;
+  }
+  catch (const C1Net::Exception &ex) {
+    _out.printError(ex.what());
+  }
+  catch (const std::exception &ex) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+  }
+  catch (...) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
+  _stopped = true;
+  _sendMutex.unlock();
 }
 
-void HMW_LGW::startListening()
-{
-	try
-	{
-		stopListening();
-		_searchFinished = true;
-		aesInit();
-		_socket = std::unique_ptr<BaseLib::TcpSocket>(new BaseLib::TcpSocket(_bl, _settings->host, _settings->port, _settings->ssl, _settings->caFile, _settings->verifyCertificate));
-		_socket->setReadTimeout(1000000);
-		_out.printDebug("Connecting to HMW-LGW with hostname " + _settings->host + " on port " + _settings->port + "...");
-		_stopped = false;
-		if(_settings->listenThreadPriority > -1) _bl->threadManager.start(_listenThread, true, _settings->listenThreadPriority, _settings->listenThreadPolicy, &HMW_LGW::listen, this);
-		else _bl->threadManager.start(_listenThread, true, &HMW_LGW::listen, this);
-		IPhysicalInterface::startListening();
-	}
-    catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(...)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    }
+void HMW_LGW::startListening() {
+  try {
+    stopListening();
+    _searchFinished = true;
+    aesInit();
+
+    C1Net::TcpSocketInfo tcp_socket_info;
+
+    C1Net::TcpSocketHostInfo tcp_socket_host_info{
+        .host = _settings->host,
+        .port = (uint16_t)BaseLib::Math::getUnsignedNumber(_settings->port),
+        .tls = _settings->ssl,
+        .verify_certificate = _settings->verifyCertificate,
+        .ca_file = _settings->caFile
+    };
+
+    _socket = std::make_unique<C1Net::TcpSocket>(tcp_socket_info, tcp_socket_host_info);
+    _out.printDebug("Connecting to HMW-LGW with hostname " + _settings->host + " on port " + _settings->port + "...");
+    _stopped = false;
+    if (_settings->listenThreadPriority > -1) _bl->threadManager.start(_listenThread, true, _settings->listenThreadPriority, _settings->listenThreadPolicy, &HMW_LGW::listen, this);
+    else _bl->threadManager.start(_listenThread, true, &HMW_LGW::listen, this);
+    IPhysicalInterface::startListening();
+  }
+  catch (const std::exception &ex) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+  }
+  catch (...) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
 }
 
-void HMW_LGW::reconnect()
-{
-	try
-	{
-		_socket->close();
-		aesInit();
-		_requestsMutex.lock();
-		_requests.clear();
-		_requestsMutex.unlock();
-		_initComplete = false;
-		_searchFinished = true;
-		_out.printDebug("Connecting to HMW-LGW with hostname " + _settings->host + " on port " + _settings->port + "...");
-		_socket->open();
-		_hostname = _settings->host;
-		_ipAddress = _socket->getIpAddress();
-		_out.printInfo("Connected to HMW-LGW with hostname " + _settings->host + " on port " + _settings->port + ".");
-		_stopped = false;
-	}
-    catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(...)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    }
+void HMW_LGW::reconnect() {
+  try {
+    _socket->Shutdown();
+    aesInit();
+    _requestsMutex.lock();
+    _requests.clear();
+    _requestsMutex.unlock();
+    _initComplete = false;
+    _searchFinished = true;
+    _out.printDebug("Connecting to HMW-LGW with hostname " + _settings->host + " on port " + _settings->port + "...");
+    _socket->Open();
+    _hostname = _settings->host;
+    _ipAddress = _socket->GetIpAddress();
+    _out.printInfo("Connected to HMW-LGW with hostname " + _settings->host + " on port " + _settings->port + ".");
+    _stopped = false;
+  }
+  catch (const std::exception &ex) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+  }
+  catch (...) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
 }
 
-void HMW_LGW::stopListening()
-{
-	try
-	{
-		_stopCallbackThread = true;
-		_bl->threadManager.join(_listenThread);
-		_stopCallbackThread = false;
-		_socket->close();
-		aesCleanup();
-		_stopped = true;
-		_sendMutex.unlock(); //In case it is deadlocked - shouldn't happen of course
-		_requestsMutex.lock();
-		_requests.clear();
-		_requestsMutex.unlock();
-		_initComplete = false;
-		IPhysicalInterface::stopListening();
-	}
-	catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(...)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    }
+void HMW_LGW::stopListening() {
+  try {
+    _stopCallbackThread = true;
+    _bl->threadManager.join(_listenThread);
+    _stopCallbackThread = false;
+    _socket->Shutdown();
+    aesCleanup();
+    _stopped = true;
+    _sendMutex.unlock(); //In case it is deadlocked - shouldn't happen of course
+    _requestsMutex.lock();
+    _requests.clear();
+    _requestsMutex.unlock();
+    _initComplete = false;
+    IPhysicalInterface::stopListening();
+  }
+  catch (const std::exception &ex) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+  }
+  catch (...) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
 }
 
-bool HMW_LGW::aesInit()
-{
-	aesCleanup();
+bool HMW_LGW::aesInit() {
+  aesCleanup();
 
-	if(_settings->lanKey.empty())
-	{
-		_out.printError("Error: No AES key specified in homematicwired.conf for communication with your HMW-LGW.");
-		return false;
-	}
-
-	gcry_error_t result;
-	gcry_md_hd_t md5Handle = nullptr;
-	if((result = gcry_md_open(&md5Handle, GCRY_MD_MD5, 0)) != GPG_ERR_NO_ERROR)
-	{
-		_out.printError("Could not initialize MD5 handle: " + BaseLib::Security::Gcrypt::getError(result));
-		return false;
-	}
-	gcry_md_write(md5Handle, _settings->lanKey.c_str(), _settings->lanKey.size());
-	gcry_md_final(md5Handle);
-	uint8_t* digest = gcry_md_read(md5Handle, GCRY_MD_MD5);
-	if(!digest)
-	{
-		_out.printError("Could not generate MD5 of lanKey: " + BaseLib::Security::Gcrypt::getError(result));
-		gcry_md_close(md5Handle);
-		return false;
-	}
-	if(gcry_md_get_algo_dlen(GCRY_MD_MD5) != 16) _out.printError("Could not generate MD5 of lanKey: Wront digest size.");
-	_key.clear();
-	_key.insert(_key.begin(), digest, digest + 16);
-	gcry_md_close(md5Handle);
-
-	if((result = gcry_cipher_open(&_encryptHandle, GCRY_CIPHER_AES128, GCRY_CIPHER_MODE_CFB, GCRY_CIPHER_SECURE)) != GPG_ERR_NO_ERROR)
-	{
-		_encryptHandle = nullptr;
-		_out.printError("Error initializing cypher handle for encryption: " + BaseLib::Security::Gcrypt::getError(result));
-		return false;
-	}
-	if(!_encryptHandle)
-	{
-		_out.printError("Error cypher handle for encryption is nullptr.");
-		return false;
-	}
-	if((result = gcry_cipher_setkey(_encryptHandle, &_key.at(0), _key.size())) != GPG_ERR_NO_ERROR)
-	{
-		aesCleanup();
-		_out.printError("Error: Could not set key for encryption: " + BaseLib::Security::Gcrypt::getError(result));
-		return false;
-	}
-
-	if((result = gcry_cipher_open(&_decryptHandle, GCRY_CIPHER_AES128, GCRY_CIPHER_MODE_CFB, GCRY_CIPHER_SECURE)) != GPG_ERR_NO_ERROR)
-	{
-		_decryptHandle = nullptr;
-		_out.printError("Error initializing cypher handle for decryption: " + BaseLib::Security::Gcrypt::getError(result));
-		return false;
-	}
-	if(!_decryptHandle)
-	{
-		_out.printError("Error cypher handle for decryption is nullptr.");
-		return false;
-	}
-	if((result = gcry_cipher_setkey(_decryptHandle, &_key.at(0), _key.size())) != GPG_ERR_NO_ERROR)
-	{
-		aesCleanup();
-		_out.printError("Error: Could not set key for decryption: " + BaseLib::Security::Gcrypt::getError(result));
-		return false;
-	}
-
-	_aesInitialized = true;
-	_aesExchangeComplete = false;
-	return true;
-}
-
-void HMW_LGW::aesCleanup()
-{
-	if(!_aesInitialized) return;
-	_aesInitialized = false;
-	if(_decryptHandle) gcry_cipher_close(_decryptHandle);
-	if(_encryptHandle) gcry_cipher_close(_encryptHandle);
-	_decryptHandle = nullptr;
-	_encryptHandle = nullptr;
-	_myIV.clear();
-	_remoteIV.clear();
-	_aesExchangeComplete = false;
-}
-
-std::vector<char> HMW_LGW::encrypt(const std::vector<char>& data)
-{
-	std::vector<char> encryptedData(data.size());
-	if(!_encryptHandle) return encryptedData;
-
-	gcry_error_t result;
-	if((result = gcry_cipher_encrypt(_encryptHandle, &encryptedData.at(0), data.size(), &data.at(0), data.size())) != GPG_ERR_NO_ERROR)
-	{
-		GD::out.printError("Error encrypting data: " + BaseLib::Security::Gcrypt::getError(result));
-		_stopCallbackThread = true;
-		return std::vector<char>();
-	}
-	return encryptedData;
-}
-
-std::vector<uint8_t> HMW_LGW::decrypt(std::vector<uint8_t>& data)
-{
-	std::vector<uint8_t> decryptedData(data.size());
-	if(!_decryptHandle) return decryptedData;
-	gcry_error_t result;
-	if((result = gcry_cipher_decrypt(_decryptHandle, &decryptedData.at(0), data.size(), &data.at(0), data.size())) != GPG_ERR_NO_ERROR)
-	{
-		GD::out.printError("Error decrypting data: " + BaseLib::Security::Gcrypt::getError(result));
-		_stopCallbackThread = true;
-		return std::vector<uint8_t>();
-	}
-	return decryptedData;
-}
-
-void HMW_LGW::sendKeepAlivePacket()
-{
-	try
-    {
-		if(!_initComplete || _waitingForResponse) return; //Don't send keep alive during search
-		if(BaseLib::HelperFunctions::getTimeSeconds() - _lastKeepAlive >= 20)
-		{
-			if(!_searchFinished)
-			{
-				_lastKeepAlive = BaseLib::HelperFunctions::getTimeSeconds();
-				_lastKeepAliveResponse = _lastKeepAlive;
-				return;
-			}
-			if(_lastKeepAliveResponse < _lastKeepAlive)
-			{
-				_lastKeepAliveResponse = _lastKeepAlive;
-				_stopped = true;
-				return;
-			}
-
-			_lastKeepAlive = BaseLib::HelperFunctions::getTimeSeconds();
-			std::vector<char> packet;
-			std::vector<char> payload{ 0x4B };
-			buildPacket(packet, payload);
-			_packetIndex++;
-			send(packet, false);
-		}
-	}
-    catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(...)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    }
-}
-
-void HMW_LGW::listen()
-{
-    try
-    {
-    	uint32_t receivedBytes = 0;
-    	int32_t bufferMax = 2048;
-		std::vector<char> buffer(bufferMax);
-		_lastTimePacket = BaseLib::HelperFunctions::getTimeSeconds();
-		_lastKeepAlive = BaseLib::HelperFunctions::getTimeSeconds();
-		_lastKeepAliveResponse = _lastKeepAlive;
-
-		std::vector<uint8_t> data;
-        while(!_stopCallbackThread)
-        {
-        	if(_stopped)
-        	{
-        		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        		if(_stopCallbackThread) return;
-        		_out.printWarning("Warning: Connection closed. Trying to reconnect...");
-        		reconnect();
-        		continue;
-        	}
-			try
-			{
-				do
-				{
-					sendKeepAlivePacket();
-					receivedBytes = _socket->proofread(buffer.data(), buffer.size());
-					if(receivedBytes > 0)
-					{
-						data.insert(data.end(), buffer.data(), buffer.data() + receivedBytes);
-						if(data.size() > 1000000)
-						{
-							_out.printError("Could not read from HMW-LGW: Too much data.");
-							break;
-						}
-					}
-				} while(receivedBytes == (unsigned)bufferMax);
-			}
-			catch(const BaseLib::SocketTimeOutException& ex)
-			{
-				if(data.empty()) //When receivedBytes is exactly 2048 bytes long, proofread will be called again, time out and the packet is received with a delay of 5 seconds. It doesn't matter as packets this big are only received at start up.
-				{
-					continue;
-				}
-			}
-			catch(const BaseLib::SocketClosedException& ex)
-			{
-				_stopped = true;
-				_out.printWarning("Warning: " + std::string(ex.what()));
-				std::this_thread::sleep_for(std::chrono::milliseconds(10000));
-				continue;
-			}
-			catch(const BaseLib::SocketOperationException& ex)
-			{
-				_stopped = true;
-				_out.printError("Error: " + std::string(ex.what()));
-				std::this_thread::sleep_for(std::chrono::milliseconds(10000));
-				continue;
-			}
-			if(data.empty()) continue;
-			if(data.size() > 1000000)
-			{
-				data.clear();
-				continue;
-			}
-
-        	if(_bl->debugLevel >= 6)
-        	{
-        		_out.printDebug("Debug: Packet received on port " + _settings->port + ". Raw data: " + BaseLib::HelperFunctions::getHexString(data));
-        	}
-
-        	processData(data);
-        	data.clear();
-
-        	_lastPacketReceived = BaseLib::HelperFunctions::getTime();
-        }
-    }
-    catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(...)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    }
-}
-
-bool HMW_LGW::aesKeyExchange(std::vector<uint8_t>& data)
-{
-	try
-	{
-		std::string hex((char*)&data.at(0), data.size());
-		if(_bl->debugLevel >= 5)
-		{
-			std::string temp = hex;
-			_bl->hf.stringReplace(temp, "\r\n", "\\r\\n");
-			_out.printDebug(std::string("Debug: AES key exchange packet received on port " + _settings->port + ": " + temp));
-		}
-		int32_t startPos = hex.find('\n');
-		if(startPos == (signed)std::string::npos)
-		{
-			_out.printError("Error: Error communicating with HMW-LGW. Initial handshake packet has wrong format.");
-			return false;
-		}
-		startPos += 5;
-		int32_t length = hex.find('\n', startPos);
-		if(length == (signed)std::string::npos)
-		{
-			_out.printError("Error: Error communicating with HMW-LGW. Initial handshake packet has wrong format.");
-			return false;
-		}
-		length = length - startPos - 1;
-		if(length <= 30)
-		{
-			_out.printError("Error: Error communicating with HMW-LGW. Initial handshake packet has wrong format.");
-			return false;
-		}
-		if(data.at(startPos - 4) == 'V' && data.at(startPos - 1) == ',')
-		{
-			uint8_t packetIndex = (BaseLib::Math::getNumber(data.at(startPos - 3)) << 4) + BaseLib::Math::getNumber(data.at(startPos - 2));
-			packetIndex++;
-			if(length != 32)
-			{
-				_stopCallbackThread = true;
-				_out.printError("Error: Error communicating with HMW-LGW. Received IV has wrong size.");
-				return false;
-			}
-			_remoteIV.clear();
-			std::string ivHex((char*)&data.at(startPos), length);
-			_remoteIV = _bl->hf.getUBinary(ivHex);
-			if(_remoteIV.size() != 16)
-			{
-				_stopCallbackThread = true;
-				_out.printError("Error: Error communicating with HMW-LGW. Received IV is not in hexadecimal format.");
-				return false;
-			}
-			if(_bl->debugLevel >= 5) _out.printDebug("HMW-LGW IV is: " + _bl->hf.getHexString(_remoteIV));
-
-			gcry_error_t result;
-			if((result = gcry_cipher_setiv(_encryptHandle, &_remoteIV.at(0), _remoteIV.size())) != GPG_ERR_NO_ERROR)
-			{
-				_stopCallbackThread = true;
-				aesCleanup();
-				_out.printError("Error: Could not set IV for encryption: " + BaseLib::Security::Gcrypt::getError(result));
-				return false;
-			}
-
-			std::vector<char> response = { 'V', _bl->hf.getHexChar(packetIndex >> 4), _bl->hf.getHexChar(packetIndex & 0xF), ',' };
-			std::random_device rd;
-			std::default_random_engine generator(rd());
-			std::uniform_int_distribution<int32_t> distribution(0, 15);
-			_myIV.clear();
-			for(int32_t i = 0; i < 32; i++)
-			{
-				int32_t nibble = distribution(generator);
-				if((i % 2) == 0)
-				{
-					_myIV.push_back(nibble << 4);
-				}
-				else
-				{
-					_myIV.at(i / 2) |= nibble;
-				}
-				response.push_back(_bl->hf.getHexChar(nibble));
-			}
-			response.push_back(0x0D);
-			response.push_back(0x0A);
-
-			if(_bl->debugLevel >= 5) _out.printDebug("Homegear IV is: " + _bl->hf.getHexString(_myIV));
-
-			if((result = gcry_cipher_setiv(_decryptHandle, &_myIV.at(0), _myIV.size())) != GPG_ERR_NO_ERROR)
-			{
-				_stopCallbackThread = true;
-				aesCleanup();
-				_out.printError("Error: Could not set IV for decryption: " + BaseLib::Security::Gcrypt::getError(result));
-				return false;
-			}
-
-			send(response, true);
-			_aesExchangeComplete = true;
-			return true;
-		}
-		else if(_remoteIV.empty())
-		{
-			_stopCallbackThread = true;
-			_out.printError("Error: Error communicating with HMW-LGW. No IV was send from HMW-LGW.");
-			return false;
-		}
-	}
-    catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(...)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    }
+  if (_settings->lanKey.empty()) {
+    _out.printError("Error: No AES key specified in homematicwired.conf for communication with your HMW-LGW.");
     return false;
+  }
+
+  gcry_error_t result;
+  gcry_md_hd_t md5Handle = nullptr;
+  if ((result = gcry_md_open(&md5Handle, GCRY_MD_MD5, 0)) != GPG_ERR_NO_ERROR) {
+    _out.printError("Could not initialize MD5 handle: " + BaseLib::Security::Gcrypt::getError(result));
+    return false;
+  }
+  gcry_md_write(md5Handle, _settings->lanKey.c_str(), _settings->lanKey.size());
+  gcry_md_final(md5Handle);
+  uint8_t *digest = gcry_md_read(md5Handle, GCRY_MD_MD5);
+  if (!digest) {
+    _out.printError("Could not generate MD5 of lanKey: " + BaseLib::Security::Gcrypt::getError(result));
+    gcry_md_close(md5Handle);
+    return false;
+  }
+  if (gcry_md_get_algo_dlen(GCRY_MD_MD5) != 16) _out.printError("Could not generate MD5 of lanKey: Wront digest size.");
+  _key.clear();
+  _key.insert(_key.begin(), digest, digest + 16);
+  gcry_md_close(md5Handle);
+
+  if ((result = gcry_cipher_open(&_encryptHandle, GCRY_CIPHER_AES128, GCRY_CIPHER_MODE_CFB, GCRY_CIPHER_SECURE)) != GPG_ERR_NO_ERROR) {
+    _encryptHandle = nullptr;
+    _out.printError("Error initializing cypher handle for encryption: " + BaseLib::Security::Gcrypt::getError(result));
+    return false;
+  }
+  if (!_encryptHandle) {
+    _out.printError("Error cypher handle for encryption is nullptr.");
+    return false;
+  }
+  if ((result = gcry_cipher_setkey(_encryptHandle, &_key.at(0), _key.size())) != GPG_ERR_NO_ERROR) {
+    aesCleanup();
+    _out.printError("Error: Could not set key for encryption: " + BaseLib::Security::Gcrypt::getError(result));
+    return false;
+  }
+
+  if ((result = gcry_cipher_open(&_decryptHandle, GCRY_CIPHER_AES128, GCRY_CIPHER_MODE_CFB, GCRY_CIPHER_SECURE)) != GPG_ERR_NO_ERROR) {
+    _decryptHandle = nullptr;
+    _out.printError("Error initializing cypher handle for decryption: " + BaseLib::Security::Gcrypt::getError(result));
+    return false;
+  }
+  if (!_decryptHandle) {
+    _out.printError("Error cypher handle for decryption is nullptr.");
+    return false;
+  }
+  if ((result = gcry_cipher_setkey(_decryptHandle, &_key.at(0), _key.size())) != GPG_ERR_NO_ERROR) {
+    aesCleanup();
+    _out.printError("Error: Could not set key for decryption: " + BaseLib::Security::Gcrypt::getError(result));
+    return false;
+  }
+
+  _aesInitialized = true;
+  _aesExchangeComplete = false;
+  return true;
 }
 
-void HMW_LGW::buildPacket(std::vector<char>& packet, const std::vector<char>& payload)
-{
-	try
-	{
-		std::vector<char> unescapedPacket;
-		unescapedPacket.push_back(0xFD);
-		int32_t size = payload.size() + 1; //Payload size plus message counter size - control byte
-		unescapedPacket.push_back(size);
-		unescapedPacket.push_back(_packetIndex);
-		unescapedPacket.insert(unescapedPacket.end(), payload.begin(), payload.end());
-		escapePacket(unescapedPacket, packet);
-	}
-    catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(...)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    }
+void HMW_LGW::aesCleanup() {
+  if (!_aesInitialized) return;
+  _aesInitialized = false;
+  if (_decryptHandle) gcry_cipher_close(_decryptHandle);
+  if (_encryptHandle) gcry_cipher_close(_encryptHandle);
+  _decryptHandle = nullptr;
+  _encryptHandle = nullptr;
+  _myIV.clear();
+  _remoteIV.clear();
+  _aesExchangeComplete = false;
 }
 
-void HMW_LGW::escapePacket(const std::vector<char>& unescapedPacket, std::vector<char>& escapedPacket)
-{
-	try
-	{
-		escapedPacket.clear();
-		if(unescapedPacket.empty()) return;
-		escapedPacket.push_back(unescapedPacket[0]);
-		for(uint32_t i = 1; i < unescapedPacket.size(); i++)
-		{
-			if(unescapedPacket[i] == (char)0xFC || unescapedPacket[i] == (char)0xFD)
-			{
-				escapedPacket.push_back(0xFC);
-				escapedPacket.push_back(unescapedPacket[i] & (char)0x7F);
-			}
-			else escapedPacket.push_back(unescapedPacket[i]);
-		}
-	}
-	catch(const std::exception& ex)
-    {
-    	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(...)
-    {
-    	_out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    }
+std::vector<char> HMW_LGW::encrypt(const std::vector<char> &data) {
+  std::vector<char> encryptedData(data.size());
+  if (!_encryptHandle) return encryptedData;
+
+  gcry_error_t result;
+  if ((result = gcry_cipher_encrypt(_encryptHandle, &encryptedData.at(0), data.size(), &data.at(0), data.size())) != GPG_ERR_NO_ERROR) {
+    GD::out.printError("Error encrypting data: " + BaseLib::Security::Gcrypt::getError(result));
+    _stopCallbackThread = true;
+    return std::vector<char>();
+  }
+  return encryptedData;
 }
 
-void HMW_LGW::processPacket(std::vector<uint8_t>& packet)
-{
-	try
-	{
-		_out.printDebug(std::string("Debug: Packet received from HMW-LGW on port " + _settings->port + ": " + _bl->hf.getHexString(packet)));
-		if(packet.size() < 4) return;
-		_requestsMutex.lock();
-		if(_requests.find(packet.at(2)) != _requests.end())
-		{
-			std::shared_ptr<Request> request = _requests.at(packet.at(2));
-			_requestsMutex.unlock();
-			if(packet.at(3) == request->getResponseType())
-			{
-				request->response = packet;
-				{
-					std::lock_guard<std::mutex> lock(request->mutex);
-					request->mutexReady = true;
-				}
-				request->conditionVariable.notify_one();
-				return;
-			}
-		}
-		else _requestsMutex.unlock();
-		if(_initComplete) parsePacket(packet);
-	}
-    catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(...)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    }
+std::vector<uint8_t> HMW_LGW::decrypt(std::vector<uint8_t> &data) {
+  std::vector<uint8_t> decryptedData(data.size());
+  if (!_decryptHandle) return decryptedData;
+  gcry_error_t result;
+  if ((result = gcry_cipher_decrypt(_decryptHandle, &decryptedData.at(0), data.size(), &data.at(0), data.size())) != GPG_ERR_NO_ERROR) {
+    GD::out.printError("Error decrypting data: " + BaseLib::Security::Gcrypt::getError(result));
+    _stopCallbackThread = true;
+    return std::vector<uint8_t>();
+  }
+  return decryptedData;
 }
 
-void HMW_LGW::processData(std::vector<uint8_t>& data)
-{
-	try
-	{
-		if(data.empty()) return;
-		if(!_aesExchangeComplete)
-		{
-			aesKeyExchange(data);
-			return;
-		}
-		std::vector<uint8_t> decryptedData = decrypt(data);
-		if(decryptedData.size() < 4) //4 is minimum size
-		{
-			_out.printWarning("Warning: Too small packet received on port " + _settings->port + ": " + _bl->hf.getHexString(decryptedData));
-			return;
-		}
-		if(!_initComplete)
-		{
-			std::string packetString((char*)&decryptedData.at(0), decryptedData.size());
-			if(_bl->debugLevel >= 5)
-			{
-				std::string temp = packetString;
-				_bl->hf.stringReplace(temp, "\r\n", "\\r\\n");
-				_out.printDebug(std::string("Debug: Packet received on port " + _settings->port + ": " + temp));
-			}
-			if(packetString.size() < 5 || packetString.at(0) != 'S')
-			{
-				_stopped = true;
-				_out.printError("Error: First packet does not start with \"S\" or has wrong structure. Please check your AES key in homematicwired.conf. Stopping listening.");
-				return;
-			}
-			_initComplete = true;
-			std::vector<char> response = { '>', packetString.at(1), packetString.at(2), ',', '0', '0', '0', '0', '\r', '\n' };
-			send(response, false);
-			return;
-		}
+void HMW_LGW::sendKeepAlivePacket() {
+  try {
+    if (!_initComplete || _waitingForResponse) return; //Don't send keep alive during search
+    if (BaseLib::HelperFunctions::getTimeSeconds() - _lastKeepAlive >= 20) {
+      if (!_searchFinished) {
+        _lastKeepAlive = BaseLib::HelperFunctions::getTimeSeconds();
+        _lastKeepAliveResponse = _lastKeepAlive;
+        return;
+      }
+      if (_lastKeepAliveResponse < _lastKeepAlive) {
+        _lastKeepAliveResponse = _lastKeepAlive;
+        _stopped = true;
+        return;
+      }
 
-		std::vector<uint8_t> packet;
-		if(!_packetBuffer.empty()) packet = _packetBuffer;
-		bool escapeByte = false;
-		for(std::vector<uint8_t>::iterator i = decryptedData.begin(); i != decryptedData.end(); ++i)
-		{
-			if(!packet.empty() && *i == 0xfd)
-			{
-				processPacket(packet);
-				packet.clear();
-				escapeByte = false;
-			}
-			if(*i == 0xfc)
-			{
-				escapeByte = true;
-				continue;
-			}
-			if(escapeByte)
-			{
-				packet.push_back(*i | 0x80);
-				escapeByte = false;
-			}
-			else packet.push_back(*i);
-		}
-
-		if(packet.size() < 5) _packetBuffer = packet;
-		else
-		{
-			processPacket(packet);
-			_packetBuffer.clear();
-		}
-	}
-    catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+      _lastKeepAlive = BaseLib::HelperFunctions::getTimeSeconds();
+      std::vector<char> packet;
+      std::vector<char> payload{0x4B};
+      buildPacket(packet, payload);
+      _packetIndex++;
+      send(packet, false);
     }
-    catch(...)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    }
+  }
+  catch (const std::exception &ex) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+  }
+  catch (...) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
 }
 
-void HMW_LGW::parsePacket(std::vector<uint8_t>& packet)
-{
-	try
-	{
-		if(packet.empty()) return;
-		if(packet.at(3) == 0x61 && packet.size() == 5)
-		{
-			if(packet.at(4) == 0)
-			{
-				if(_bl->debugLevel >= 5) _out.printDebug("Debug: Keep alive response received on port " + _settings->port + ".");
-				_lastKeepAliveResponse = BaseLib::HelperFunctions::getTimeSeconds();
-			}
-			else if(packet.at(4) == 1)
-			{
-				_out.printDebug("Debug: ACK response received on port " + _settings->port + ".");
-			}
-			else if(packet.at(4) == 2)
-			{
-				_out.printWarning("Warning: NACK received.");
-			}
-			else
-			{
-				_out.printWarning("Warning: Unknown ACK received.");
-			}
-		}
-		else if(packet.at(3) == 0x63) //Discovery finished
-		{
-			_searchFinished = true;
-		}
-		else if(packet.at(3) == 0x64) //Device found
-		{
-			if(packet.size() >= 8)
-			{
-				int32_t address = (packet[4] << 24) + (packet[5] << 16) + (packet[6] << 8) + packet[7];
-				_searchResult.push_back(address);
-				GD::out.printMessage("Peer found with address 0x" + BaseLib::HelperFunctions::getHexString(address, 8));
-			}
-			else GD::out.printError("Error: \"Device found\" packet with wrong size received.");
-		}
-		else if(packet.at(3) == 0x65) //Packet received
-		{
-			std::shared_ptr<HMWiredPacket> hmwiredPacket(new HMWiredPacket(packet, true, BaseLib::HelperFunctions::getTime()));
-			_lastPacketReceived = BaseLib::HelperFunctions::getTime();
-			raisePacketReceived(hmwiredPacket);
-		}
-	}
-    catch(const std::exception& ex)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+void HMW_LGW::listen() {
+  try {
+    uint32_t receivedBytes = 0;
+    int32_t bufferMax = 2048;
+    std::vector<char> buffer(bufferMax);
+    bool more_data = false;
+    _lastTimePacket = BaseLib::HelperFunctions::getTimeSeconds();
+    _lastKeepAlive = BaseLib::HelperFunctions::getTimeSeconds();
+    _lastKeepAliveResponse = _lastKeepAlive;
+
+    std::vector<uint8_t> data;
+    while (!_stopCallbackThread) {
+      if (_stopped) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        if (_stopCallbackThread) return;
+        _out.printWarning("Warning: Connection closed. Trying to reconnect...");
+        reconnect();
+        continue;
+      }
+      try {
+        do {
+          sendKeepAlivePacket();
+          receivedBytes = _socket->Read((uint8_t *)buffer.data(), buffer.size(), more_data);
+          if (receivedBytes > 0) {
+            data.insert(data.end(), buffer.data(), buffer.data() + receivedBytes);
+            if (data.size() > 1000000) {
+              _out.printError("Could not read from HMW-LGW: Too much data.");
+              break;
+            }
+          }
+        } while (receivedBytes == (unsigned)bufferMax);
+      }
+      catch (const C1Net::TimeoutException &ex) {
+        if (data.empty()) //When receivedBytes is exactly 2048 bytes long, proofread will be called again, time out and the packet is received with a delay of 5 seconds. It doesn't matter as packets this big are only received at start up.
+        {
+          continue;
+        }
+      }
+      catch (const C1Net::ClosedException &ex) {
+        _stopped = true;
+        _out.printWarning("Warning: " + std::string(ex.what()));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+        continue;
+      }
+      catch (const C1Net::Exception &ex) {
+        _stopped = true;
+        _out.printError("Error: " + std::string(ex.what()));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+        continue;
+      }
+      if (data.empty()) continue;
+      if (data.size() > 1000000) {
+        data.clear();
+        continue;
+      }
+
+      if (_bl->debugLevel >= 6) {
+        _out.printDebug("Debug: Packet received on port " + _settings->port + ". Raw data: " + BaseLib::HelperFunctions::getHexString(data));
+      }
+
+      processData(data);
+      data.clear();
+
+      _lastPacketReceived = BaseLib::HelperFunctions::getTime();
     }
-    catch(...)
-    {
-        _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
+  catch (const std::exception &ex) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+  }
+  catch (...) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
+}
+
+bool HMW_LGW::aesKeyExchange(std::vector<uint8_t> &data) {
+  try {
+    std::string hex((char *)&data.at(0), data.size());
+    if (_bl->debugLevel >= 5) {
+      std::string temp = hex;
+      _bl->hf.stringReplace(temp, "\r\n", "\\r\\n");
+      _out.printDebug(std::string("Debug: AES key exchange packet received on port " + _settings->port + ": " + temp));
     }
+    int32_t startPos = hex.find('\n');
+    if (startPos == (signed)std::string::npos) {
+      _out.printError("Error: Error communicating with HMW-LGW. Initial handshake packet has wrong format.");
+      return false;
+    }
+    startPos += 5;
+    int32_t length = hex.find('\n', startPos);
+    if (length == (signed)std::string::npos) {
+      _out.printError("Error: Error communicating with HMW-LGW. Initial handshake packet has wrong format.");
+      return false;
+    }
+    length = length - startPos - 1;
+    if (length <= 30) {
+      _out.printError("Error: Error communicating with HMW-LGW. Initial handshake packet has wrong format.");
+      return false;
+    }
+    if (data.at(startPos - 4) == 'V' && data.at(startPos - 1) == ',') {
+      uint8_t packetIndex = (BaseLib::Math::getNumber(data.at(startPos - 3)) << 4) + BaseLib::Math::getNumber(data.at(startPos - 2));
+      packetIndex++;
+      if (length != 32) {
+        _stopCallbackThread = true;
+        _out.printError("Error: Error communicating with HMW-LGW. Received IV has wrong size.");
+        return false;
+      }
+      _remoteIV.clear();
+      std::string ivHex((char *)&data.at(startPos), length);
+      _remoteIV = _bl->hf.getUBinary(ivHex);
+      if (_remoteIV.size() != 16) {
+        _stopCallbackThread = true;
+        _out.printError("Error: Error communicating with HMW-LGW. Received IV is not in hexadecimal format.");
+        return false;
+      }
+      if (_bl->debugLevel >= 5) _out.printDebug("HMW-LGW IV is: " + _bl->hf.getHexString(_remoteIV));
+
+      gcry_error_t result;
+      if ((result = gcry_cipher_setiv(_encryptHandle, &_remoteIV.at(0), _remoteIV.size())) != GPG_ERR_NO_ERROR) {
+        _stopCallbackThread = true;
+        aesCleanup();
+        _out.printError("Error: Could not set IV for encryption: " + BaseLib::Security::Gcrypt::getError(result));
+        return false;
+      }
+
+      std::vector<char> response = {'V', _bl->hf.getHexChar(packetIndex >> 4), _bl->hf.getHexChar(packetIndex & 0xF), ','};
+      std::random_device rd;
+      std::default_random_engine generator(rd());
+      std::uniform_int_distribution<int32_t> distribution(0, 15);
+      _myIV.clear();
+      for (int32_t i = 0; i < 32; i++) {
+        int32_t nibble = distribution(generator);
+        if ((i % 2) == 0) {
+          _myIV.push_back(nibble << 4);
+        } else {
+          _myIV.at(i / 2) |= nibble;
+        }
+        response.push_back(_bl->hf.getHexChar(nibble));
+      }
+      response.push_back(0x0D);
+      response.push_back(0x0A);
+
+      if (_bl->debugLevel >= 5) _out.printDebug("Homegear IV is: " + _bl->hf.getHexString(_myIV));
+
+      if ((result = gcry_cipher_setiv(_decryptHandle, &_myIV.at(0), _myIV.size())) != GPG_ERR_NO_ERROR) {
+        _stopCallbackThread = true;
+        aesCleanup();
+        _out.printError("Error: Could not set IV for decryption: " + BaseLib::Security::Gcrypt::getError(result));
+        return false;
+      }
+
+      send(response, true);
+      _aesExchangeComplete = true;
+      return true;
+    } else if (_remoteIV.empty()) {
+      _stopCallbackThread = true;
+      _out.printError("Error: Error communicating with HMW-LGW. No IV was send from HMW-LGW.");
+      return false;
+    }
+  }
+  catch (const std::exception &ex) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+  }
+  catch (...) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
+  return false;
+}
+
+void HMW_LGW::buildPacket(std::vector<char> &packet, const std::vector<char> &payload) {
+  try {
+    std::vector<char> unescapedPacket;
+    unescapedPacket.push_back(0xFD);
+    int32_t size = payload.size() + 1; //Payload size plus message counter size - control byte
+    unescapedPacket.push_back(size);
+    unescapedPacket.push_back(_packetIndex);
+    unescapedPacket.insert(unescapedPacket.end(), payload.begin(), payload.end());
+    escapePacket(unescapedPacket, packet);
+  }
+  catch (const std::exception &ex) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+  }
+  catch (...) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
+}
+
+void HMW_LGW::escapePacket(const std::vector<char> &unescapedPacket, std::vector<char> &escapedPacket) {
+  try {
+    escapedPacket.clear();
+    if (unescapedPacket.empty()) return;
+    escapedPacket.push_back(unescapedPacket[0]);
+    for (uint32_t i = 1; i < unescapedPacket.size(); i++) {
+      if (unescapedPacket[i] == (char)0xFC || unescapedPacket[i] == (char)0xFD) {
+        escapedPacket.push_back(0xFC);
+        escapedPacket.push_back(unescapedPacket[i] & (char)0x7F);
+      } else escapedPacket.push_back(unescapedPacket[i]);
+    }
+  }
+  catch (const std::exception &ex) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+  }
+  catch (...) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
+}
+
+void HMW_LGW::processPacket(std::vector<uint8_t> &packet) {
+  try {
+    _out.printDebug(std::string("Debug: Packet received from HMW-LGW on port " + _settings->port + ": " + _bl->hf.getHexString(packet)));
+    if (packet.size() < 4) return;
+    _requestsMutex.lock();
+    if (_requests.find(packet.at(2)) != _requests.end()) {
+      std::shared_ptr<Request> request = _requests.at(packet.at(2));
+      _requestsMutex.unlock();
+      if (packet.at(3) == request->getResponseType()) {
+        request->response = packet;
+        {
+          std::lock_guard<std::mutex> lock(request->mutex);
+          request->mutexReady = true;
+        }
+        request->conditionVariable.notify_one();
+        return;
+      }
+    } else _requestsMutex.unlock();
+    if (_initComplete) parsePacket(packet);
+  }
+  catch (const std::exception &ex) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+  }
+  catch (...) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
+}
+
+void HMW_LGW::processData(std::vector<uint8_t> &data) {
+  try {
+    if (data.empty()) return;
+    if (!_aesExchangeComplete) {
+      aesKeyExchange(data);
+      return;
+    }
+    std::vector<uint8_t> decryptedData = decrypt(data);
+    if (decryptedData.size() < 4) //4 is minimum size
+    {
+      _out.printWarning("Warning: Too small packet received on port " + _settings->port + ": " + _bl->hf.getHexString(decryptedData));
+      return;
+    }
+    if (!_initComplete) {
+      std::string packetString((char *)&decryptedData.at(0), decryptedData.size());
+      if (_bl->debugLevel >= 5) {
+        std::string temp = packetString;
+        _bl->hf.stringReplace(temp, "\r\n", "\\r\\n");
+        _out.printDebug(std::string("Debug: Packet received on port " + _settings->port + ": " + temp));
+      }
+      if (packetString.size() < 5 || packetString.at(0) != 'S') {
+        _stopped = true;
+        _out.printError("Error: First packet does not start with \"S\" or has wrong structure. Please check your AES key in homematicwired.conf. Stopping listening.");
+        return;
+      }
+      _initComplete = true;
+      std::vector<char> response = {'>', packetString.at(1), packetString.at(2), ',', '0', '0', '0', '0', '\r', '\n'};
+      send(response, false);
+      return;
+    }
+
+    std::vector<uint8_t> packet;
+    if (!_packetBuffer.empty()) packet = _packetBuffer;
+    bool escapeByte = false;
+    for (std::vector<uint8_t>::iterator i = decryptedData.begin(); i != decryptedData.end(); ++i) {
+      if (!packet.empty() && *i == 0xfd) {
+        processPacket(packet);
+        packet.clear();
+        escapeByte = false;
+      }
+      if (*i == 0xfc) {
+        escapeByte = true;
+        continue;
+      }
+      if (escapeByte) {
+        packet.push_back(*i | 0x80);
+        escapeByte = false;
+      } else packet.push_back(*i);
+    }
+
+    if (packet.size() < 5) _packetBuffer = packet;
+    else {
+      processPacket(packet);
+      _packetBuffer.clear();
+    }
+  }
+  catch (const std::exception &ex) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+  }
+  catch (...) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
+}
+
+void HMW_LGW::parsePacket(std::vector<uint8_t> &packet) {
+  try {
+    if (packet.empty()) return;
+    if (packet.at(3) == 0x61 && packet.size() == 5) {
+      if (packet.at(4) == 0) {
+        if (_bl->debugLevel >= 5) _out.printDebug("Debug: Keep alive response received on port " + _settings->port + ".");
+        _lastKeepAliveResponse = BaseLib::HelperFunctions::getTimeSeconds();
+      } else if (packet.at(4) == 1) {
+        _out.printDebug("Debug: ACK response received on port " + _settings->port + ".");
+      } else if (packet.at(4) == 2) {
+        _out.printWarning("Warning: NACK received.");
+      } else {
+        _out.printWarning("Warning: Unknown ACK received.");
+      }
+    } else if (packet.at(3) == 0x63) //Discovery finished
+    {
+      _searchFinished = true;
+    } else if (packet.at(3) == 0x64) //Device found
+    {
+      if (packet.size() >= 8) {
+        int32_t address = (packet[4] << 24) + (packet[5] << 16) + (packet[6] << 8) + packet[7];
+        _searchResult.push_back(address);
+        GD::out.printMessage("Peer found with address 0x" + BaseLib::HelperFunctions::getHexString(address, 8));
+      } else GD::out.printError("Error: \"Device found\" packet with wrong size received.");
+    } else if (packet.at(3) == 0x65) //Packet received
+    {
+      std::shared_ptr<HMWiredPacket> hmwiredPacket(new HMWiredPacket(packet, true, BaseLib::HelperFunctions::getTime()));
+      _lastPacketReceived = BaseLib::HelperFunctions::getTime();
+      raisePacketReceived(hmwiredPacket);
+    }
+  }
+  catch (const std::exception &ex) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+  }
+  catch (...) {
+    _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+  }
 }
 
 }
