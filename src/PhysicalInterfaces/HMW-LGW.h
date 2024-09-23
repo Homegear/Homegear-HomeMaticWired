@@ -62,7 +62,7 @@ class HMW_LGW  : public IHMWiredInterface
         void stopListening();
         void sendPacket(std::shared_ptr<BaseLib::Systems::Packet> packet);
         int64_t lastAction() { return _lastAction; }
-        virtual bool isOpen() { return _initComplete && _socket->connected(); }
+        virtual bool isOpen() { return _initComplete && _socket->Connected(); }
 
         virtual bool autoResend() { return true; }
         virtual void search(std::vector<int32_t>& foundDevices);
@@ -84,7 +84,7 @@ class HMW_LGW  : public IHMWiredInterface
 
         int64_t _lastAction = 0;
         std::string _port;
-        std::unique_ptr<BaseLib::TcpSocket> _socket;
+        std::unique_ptr<C1Net::TcpSocket> _socket;
         std::mutex _requestsMutex;
         std::map<uint8_t, std::shared_ptr<Request>> _requests;
         std::mutex _sendMutex;
