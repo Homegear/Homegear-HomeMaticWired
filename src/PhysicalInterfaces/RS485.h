@@ -30,6 +30,8 @@
 #ifndef RS485_H
 #define RS485_H
 
+#include <cstdint>
+
 #include "IHMWiredInterface.h"
 
 #include <thread>

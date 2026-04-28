@@ -30,6 +30,8 @@
 #ifndef HMWIREDPACKETMANAGER_H_
 #define HMWIREDPACKETMANAGER_H_
 
+#include <cstdint>
+
 #include "HMWiredPacket.h"
 
 #include <iostream>

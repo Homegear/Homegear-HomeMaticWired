@@ -30,6 +30,8 @@
 #ifndef HMWIREDPACKET_H_
 #define HMWIREDPACKET_H_
 
+#include <cstdint>
+
 #include <homegear-base/BaseLib.h>
 
 #include <map>

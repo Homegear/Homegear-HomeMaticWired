@@ -30,6 +30,8 @@
 #ifndef HMW_LGW_H
 #define HMW_LGW_H
 
+#include <cstdint>
+
 #include "../HMWiredPacket.h"
 #include "IHMWiredInterface.h"
 
