@@ -30,6 +30,8 @@
 #ifndef IHMWIREDINTERFACE_H_
 #define IHMWIREDINTERFACE_H_
 
+#include <cstdint>
+
 #include <homegear-base/BaseLib.h>
 
 namespace HMWired {
